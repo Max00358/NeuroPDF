@@ -17,15 +17,15 @@ const chat = async(filePath = "./uploads/sample-default.pdf", UserQuestion)=>{
     const splitDocs = await text_splitter.splitDocuments(data);
 
     // the entire PDF into context
-    // const context = data.map(doc => doc.pageContent).join("\n\n");
+    const context = data.map(doc => doc.pageContent).join("\n\n");
 
     // naive filter to pick relevant chunks based on keyword presence
-    const relevantChunks = splitDocs
-        .filter(doc => doc.pageContent.toLowerCase().includes(UserQuestion.toLowerCase()))
-        .map(doc => doc.pageContent)
-        .slice(0, 3); // pick top 3 relevant chunks
+    // const relevantChunks = splitDocs
+    //     .filter(doc => doc.pageContent.toLowerCase().includes(UserQuestion.toLowerCase()))
+    //     .map(doc => doc.pageContent)
+    //     .slice(0, 3); // pick top 3 relevant chunks
 
-    const context = relevantChunks.join("\n\n");
+    // const context = relevantChunks.join("\n\n");
 
     // back-end (server.js) calls front-end (chat.js) 
     // front-end calls LLM API and spits results to back-end
@@ -35,8 +35,7 @@ const chat = async(filePath = "./uploads/sample-default.pdf", UserQuestion)=>{
             {
                 role: "system",
                 content: `Use the following pieces of context to answer the question at the end.
-                        You always knows the answer!
-                        Use three sentences maximum and keep the answer as concise as possible.
+                        Use one paragraph max and keep the answer as concise as possible.
 
                         The question will be asked in the below format:
                         {context}
@@ -54,6 +53,7 @@ const chat = async(filePath = "./uploads/sample-default.pdf", UserQuestion)=>{
     };
 
     try{
+        // separate HTTP request sent from backend to DeepSeek API 
         const response = await axios.post("https://api.deepseek.com/chat/completions", payload, {
             headers: {
                 "Content-Type": "application/json",

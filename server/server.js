@@ -1,10 +1,15 @@
+// LLM API platform
+    // https://platform.openai.com/
+    // https://platform.deepseek.com/usage 
+
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import multer from "multer";
 import chat from "./chat.js";
+import path from "path";
 
-dotenv.config();
+dotenv.config({ path: path.resolve("../.env") });
 
 // CORS(cross-origin resource sharing) vs. Proxy
     // CORS: a browser security mechanism that restricts HTTP requests between different domains
@@ -28,21 +33,22 @@ const storage = multer.diskStorage({
 const upload = multer({storage: storage});
 const PORT = 5001;
 
-let filePath;
-
 app.post("/upload", upload.single("file"), async(req, res) => {
-    filePath = req.file.path;
-    res.send(filePath + " upload successfully.");
+    // sends json format key-value pair { filePath (key) : req.file.path (value) }
+    res.json({ filePath : req.file.path });
 });
 
+// backend expects POST request
 app.post("/chat", express.json(), async(req, res)=>{
     const apiKey = process.env.REACT_APP_DEEPSEEK_API_KEY;
     
     // Handle question from URL parameter (from Postman)
     // e.g. http://localhost:5001/chat?question='Does this student reveal his aura through his writing?'
-    const urlQuestion = req.query.question;
-    const bodyQuestion = req.body?.message;
+    const urlQuestion = req.query.question; // comes from Postman or Url requests
+    const bodyQuestion = req.body?.message; // comes from frontend POST requests with JSON body { message: "..." }
     const finalQuestion = urlQuestion || bodyQuestion;
+
+    const filePath = req.body?.filePath;
     
     if (!finalQuestion) {
         return res.status(400).send("Missing Question!");
