@@ -4,6 +4,9 @@ import PdfUploader from './components/PdfUploader';
 import RenderQA from './components/RenderQA';
 import { Layout, Typography } from "antd";
 
+// to run both FE and BE concurrently: 
+// under root folder-> npm run dev
+
 const chatComponentStyle = {
   position: "fixed",
   bottom: "0",
@@ -22,7 +25,6 @@ const renderQAStyle = {
   paddingTop: "80px",
 }
 
-// to run both FE and BE concurrently: under root folder-> npm run dev
 const App = () => {
   const [filePath, setFilePath] = useState(null);
   const [conversation, setConversation] = useState([]);

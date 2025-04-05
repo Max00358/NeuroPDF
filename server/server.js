@@ -58,7 +58,7 @@ app.post("/chat", express.json(), async(req, res)=>{
         const response = await chat(filePath, finalQuestion);
         return res.json(response);
     } catch (error) {
-        console.error("Chat Error:", error.message);
+        console.error("Chat Error:", error);
         return res.status(500).send("Error processing the request");
     }
 });

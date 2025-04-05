@@ -1,8 +1,5 @@
 import { RecursiveCharacterTextSplitter, TextSplitter } from "langchain/text_splitter";
-import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { PDFLoader } from "langchain/document_loaders/fs/pdf";
-import { RetrievalQAChain } from "langchain/chains";
-import { PromptTemplate } from "langchain/prompts";
 import axios from "axios";
 
 const chat = async(filePath = "./uploads/sample-default.pdf", UserQuestion)=>{
