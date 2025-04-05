@@ -32,6 +32,15 @@ const PdfUploader = (props) => {
     const attributes = {
         name: "file", 
         multiple: false,
+        beforeUpload: (file) => {
+            const isPdf = file.type === "application/pdf";
+          
+            if (!isPdf) {
+              message.error("Only PDF files are allowed.");
+            }
+          
+            return isPdf || Upload.LIST_IGNORE; // prevent the upload if not PDF
+        },
         customRequest: async({ file, onSuccess, onError }) => {
             // the response is just a filePath
             const filePath = await uploadToBackend(file, setFilePath);
