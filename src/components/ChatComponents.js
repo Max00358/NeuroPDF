@@ -76,9 +76,9 @@ const ChatComponent = (props) => {
         });
     };
     const userStartConvo = () => {
-        SpeechRecognition.startListening();
-        setIsRecording(true);
         resetEverything();
+        SpeechRecognition.startListening({ continuous: false });
+        setIsRecording(true);
     };
     const resetEverything = () => {
         resetTranscript();
@@ -94,7 +94,7 @@ const ChatComponent = (props) => {
             SpeechRecognition.stopListening();
         } else {
             setIsRecording(true);
-            SpeechRecognition.startListening();
+            SpeechRecognition.startListening({ continuous: false });
         }
     };
 
