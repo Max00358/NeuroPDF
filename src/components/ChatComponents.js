@@ -50,6 +50,12 @@ const ChatComponent = (props) => {
     }, []);
 
     // this hook automates what happens after voice input ends
+    // [listening, transcript]
+        // means run when either of the above elements changes
+    // []
+        // means run when components first mount (insert components into DOM for 1st time)
+    // no []
+        // runs every re-render (expensive!)
     useEffect(() => {
         // !!transcript forces it to be a boolean
         if(!listening && !!transcript){

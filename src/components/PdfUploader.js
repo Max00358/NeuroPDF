@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import { InboxOutlined } from "@ant-design/icons";
 import { message, Upload } from "antd";
@@ -7,7 +7,10 @@ const { Dragger } = Upload;
 const DOMAIN = "http://localhost:5001";
 
 const PdfUploader = (props) => {
+    // props is an obj, so we use {...} to catch it
+    // useState returns an array, so we use [...] to catch it
     const {setFilePath} = props;
+    const [fileList, setFileList] = useState([]);
 
     const uploadToBackend = async(file) => {
         const formData = new FormData();
@@ -32,6 +35,7 @@ const PdfUploader = (props) => {
     const attributes = {
         name: "file", 
         multiple: false,
+        fileList,
         beforeUpload: (file) => {
             const isPdf = file.type === "application/pdf";
           
@@ -46,6 +50,7 @@ const PdfUploader = (props) => {
             const filePath = await uploadToBackend(file, setFilePath);
             if(filePath){
                 onSuccess("Upload successful");
+                setFileList([file]);
             }
             else{
                 onError(new Error("Upload Failed"));
@@ -66,6 +71,10 @@ const PdfUploader = (props) => {
         },
         onDrop(e){
             console.log("Dropped files", e.dataTransfer.files);
+        },
+        onRemove: (file) => {
+            setFileList([]);
+            return true;
         }
     };
 
