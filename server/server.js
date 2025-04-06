@@ -7,7 +7,12 @@ import cors from "cors";
 import dotenv from "dotenv";
 import multer from "multer";
 import chat from "./chat.js";
+import fs from "fs/promises";
 import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.resolve("../.env") });
 
@@ -33,7 +38,23 @@ const storage = multer.diskStorage({
 const upload = multer({storage: storage});
 const PORT = 5001;
 
-app.post("/upload", upload.single("file"), async(req, res) => {
+// middleware that executes after post & before upload 
+const clearBeforeUpload = async(req, res, next) => {
+    const uploadsFolder = path.join(__dirname, "uploads");
+    try{
+        const files = await fs.readdir(uploadsFolder);
+        for(const file of files){
+            console.log(`(server.js->clearBeforeUpload) deleting file: ${file}...`);
+            await fs.unlink(path.join(uploadsFolder, file));
+        }
+    } catch(e){
+        console.error();
+    }
+
+    next(); // move onto next function, if no next(), then request hangs indefinitely
+};
+
+app.post("/upload", clearBeforeUpload, upload.single("file"), async(req, res) => {
     // sends json format key-value pair { filePath (key) : req.file.path (value) }
     res.json({ filePath : req.file.path });
 });
