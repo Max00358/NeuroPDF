@@ -1,6 +1,6 @@
 import React, { useState, useEffect} from "react";
 import { Button, Input } from "antd";
-import { AudioOutlined } from "@ant-design/icons";
+import { AudioOutlined, PlayCircleOutlined, PauseCircleOutlined} from "@ant-design/icons";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 import Speech from "speak-tts";
 import axios from "axios";
@@ -19,6 +19,7 @@ const ChatComponent = (props) => {
     const [searchValue, setSearchValue] = useState("")
     const [isChatModeOn, setIsChatModeOn] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
+    const [isPaused, setIsPaused] = useState(false);
     const [speech, setSpeech] = useState();
 
     const {
@@ -64,7 +65,7 @@ const ChatComponent = (props) => {
         }
     }, [listening, transcript]);
 
-    const talk = (what2say) => {
+    const talk = (what2say, isPausedNow) => {
         speech.speak({
             text: what2say,
             queue: false, 
@@ -81,14 +82,6 @@ const ChatComponent = (props) => {
             }
         });
     };
-    const userStartConvo = () => {
-        resetEverything();
-        SpeechRecognition.startListening({ continuous: false });
-        setIsRecording(true);
-    };
-    const resetEverything = () => {
-        resetTranscript();
-    };
     const chatModeClickHandler = () => {
         setIsChatModeOn(!isChatModeOn);
         setIsRecording(false);
@@ -102,6 +95,20 @@ const ChatComponent = (props) => {
             setIsRecording(true);
             SpeechRecognition.startListening({ continuous: false });
         }
+    };
+    const mutingClickHandler = () => {
+        // prev is current state value before update
+        setIsPaused((prev) => {
+            const currPaused = !prev;
+            if(speech){
+                if(currPaused) {
+                    speech.pause();
+                } else {
+                    speech.resume();
+                }
+            }
+            return currPaused;
+        });
     };
 
     const handleChange = (e) => {
@@ -124,8 +131,8 @@ const ChatComponent = (props) => {
             const response_str = response.data?.answer || "No Response Data :(";
             handleResp(question, response_str);
             
-            if(isChatModeOn){
-                talk(response_str);
+            if(speech && isChatModeOn){
+                talk(response_str, isPaused);
             }
         }
         catch(error){
@@ -163,7 +170,8 @@ const ChatComponent = (props) => {
                 Chat Mode: {isChatModeOn? "On" : "Off"}
             </Button>
 
-            {isChatModeOn && 
+            {
+            isChatModeOn && 
                 <Button
                     type="primary"
                     icon={<AudioOutlined />}
@@ -173,6 +181,18 @@ const ChatComponent = (props) => {
                     style={{ marginLeft: "5px" }}
                 >
                     {isRecording ? "Recording..." : "Click to Record"}
+                </Button>
+            }
+            {
+            isChatModeOn &&
+                <Button
+                    type="primary"
+                    icon={isPaused? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+                    size="large"
+                    danger={isPaused}
+                    onClick={mutingClickHandler}
+                    style={{ marginLeft: "5px" }}
+                >
                 </Button>
             }
         </div>
