@@ -65,7 +65,7 @@ const ChatComponent = (props) => {
         }
     }, [listening, transcript]);
 
-    const talk = (what2say, isPausedNow) => {
+    const talk = (what2say) => {
         speech.speak({
             text: what2say,
             queue: false, 
