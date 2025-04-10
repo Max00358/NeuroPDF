@@ -1,86 +1,98 @@
+// to run both FE and BE concurrently: 
+// under root folder-> npm run dev
+
 import React, { useState } from 'react';
 import ChatComponent from './components/ChatComponents';
 import PdfUploader from './components/PdfUploader';
 import RenderQA from './components/RenderQA';
-import { Layout, Typography } from "antd";
+import { Layout } from "antd";
+import logo from "./graphics/logo192.png";
 
-// to run both FE and BE concurrently: 
-// under root folder-> npm run dev
+// Clean and modern layout styles
+const layoutStyles = {
+  height: "100vh",
+  backgroundColor: "#f5f6fa", // light neutral
+  fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif"
+};
+
+const headerStyles = {
+  backgroundColor: "#ffffff",
+  display: "flex",
+  alignItems: "center",
+  padding: "0 40px",
+  height: "72px",
+  boxShadow: "0 1px 4px rgba(0, 0, 0, 0.06)",
+  zIndex: 1
+};
+
+const logoStyles = {
+  height: "48px",
+  cursor: "pointer"
+};
+
+const contentStyles = {
+  width: "100%",
+  maxWidth: "900px",
+  margin: "60px auto 140px auto",
+  padding: "0 24px"
+};
+
+const componentWrapper = {
+  backgroundColor: "#fff",
+  borderRadius: "16px",
+  padding: "32px",
+  boxShadow: "0 8px 20px rgba(0, 0, 0, 0.05)",
+  marginBottom: "32px"
+};
 
 const chatComponentStyle = {
   position: "fixed",
   bottom: "0",
-  width: "80%",
-  left: "10%",
-  marginBottom: "20px"
+  width: "100%",
+  left: "0",
+  padding: "24px 40px",
+  backgroundColor: "#ffffff",
+  boxShadow: "0 -2px 12px rgba(0, 0, 0, 0.05)"
 };
-
-const pdfUploaderStyle = {
-  margin: "auto",
-  paddingTop: "80px"
-};
-
-const renderQAStyle = {
-  height: "50%",
-  paddingTop: "80px",
-}
 
 const App = () => {
   const [filePath, setFilePath] = useState(null);
   const [conversation, setConversation] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const { Header, Content } = Layout;
-  const { Title } = Typography;
 
   const handleResp = (question, answer) => {
     setConversation([...conversation, { question, answer }]);
-  }
+  };
 
   return (
     <>
-      <Layout style={{ height: "100vh", backgroundColor: "white" }}>
-        <Header
-          style={{
-            display: "flex",
-            alignItems: "center"
-          }}
-        >
-          <Title style={{ color: "white" }}>NeuroPDF</Title>
+      <Layout style={layoutStyles}>
+        <Header style={headerStyles}>
+          <img src={logo} alt="NeuroPDF Logo" style={logoStyles} />
         </Header>
 
-        <Content
-          style={{
-            width: "80%",
-            margin: "auto"
-          }}
-        >
-          <div style={{ width: "80%", margin: "auto" }}>
-            <div style={pdfUploaderStyle}>
-              <PdfUploader setFilePath={setFilePath}/>
-            </div>
+        <Content style={contentStyles}>
+          <div style={componentWrapper}>
+            <PdfUploader setFilePath={setFilePath} />
           </div>
 
-          <br />
-          <br />
-
-          <div style={renderQAStyle} id='chat-scroll-container'>
-            <RenderQA conversation={conversation} isLoading={isLoading}/>
+          <div style={componentWrapper} id="chat-scroll-container">
+            <RenderQA conversation={conversation} isLoading={isLoading} />
           </div>
-
-          <br />
-          <br />
         </Content>
-          <div style={chatComponentStyle}>
-            <ChatComponent 
-              handleResp={handleResp}
-              isLoading={isLoading}
-              setIsLoading={setIsLoading}
-              filePath={filePath}
-            />
-          </div>
+
+        <div style={chatComponentStyle}>
+          <ChatComponent
+            handleResp={handleResp}
+            isLoading={isLoading}
+            setIsLoading={setIsLoading}
+            filePath={filePath}
+          />
+        </div>
       </Layout>
     </>
   );
-}
+};
 
 export default App;
