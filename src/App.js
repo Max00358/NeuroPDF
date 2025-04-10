@@ -3,12 +3,11 @@
 
 import React, { useState } from 'react';
 import ChatComponent from './components/ChatComponents';
-import PdfUploader from './components/PdfUploader';
 import RenderQA from './components/RenderQA';
 import { Layout } from "antd";
+import { RightOutlined } from "@ant-design/icons";
 import logo from "./graphics/logo192.png";
 
-// Clean and modern layout styles
 const layoutStyles = {
   height: "100vh",
   backgroundColor: "#f5f6fa", // light neutral
@@ -16,18 +15,39 @@ const layoutStyles = {
 };
 
 const headerStyles = {
-  backgroundColor: "#ffffff",
+  backgroundColor: "#f0f2f5", // soft iOS-like gray
   display: "flex",
+  justifyContent: "center",
   alignItems: "center",
-  padding: "0 40px",
-  height: "72px",
-  boxShadow: "0 1px 4px rgba(0, 0, 0, 0.06)",
+  height: "80px",
+  padding: "0 24px",
+  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
+  borderBottom: "1px solid #e0e0e0", // iOS subtle divider
   zIndex: 1
 };
 
+const profileContainerStyles = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  lineHeight: "1.2",
+};
+
 const logoStyles = {
-  height: "48px",
-  cursor: "pointer"
+  height: "36px",       // smaller like iMessage avatars
+  width: "36px",
+  borderRadius: "50%",  // make it circular like iMessage profile picture
+  objectFit: "cover",
+  marginBottom: "4px"
+};
+
+const textContainerStyles = {
+  display: "flex",
+  alignItems: "center",
+  gap: "4px",
+  fontSize: "15px",
+  fontWeight: "500",
+  color: "#4a4a4a" // muted dark gray
 };
 
 const contentStyles = {
@@ -43,8 +63,8 @@ const chatComponentStyle = {
   width: "100%",
   left: "0",
   padding: "24px 40px",
-  backgroundColor: "#ffffff",
-  boxShadow: "0 -2px 12px rgba(0, 0, 0, 0.05)"
+  //backgroundColor: "#ffffff",
+  //boxShadow: "0 -2px 12px rgba(0, 0, 0, 0.05)"
 };
 
 const App = () => {
@@ -60,7 +80,13 @@ const App = () => {
     <>
       <Layout style={layoutStyles}>
         <Header style={headerStyles}>
-          <img src={logo} alt="NeuroPDF Logo" style={logoStyles} />
+          <div style={profileContainerStyles}>
+            <img src={logo} alt="NeuroPDF Logo" style={logoStyles} />
+            <div style={textContainerStyles}>
+              NeuroPDF
+              <RightOutlined />
+            </div>
+          </div>
         </Header>
 
         <Content style={contentStyles}>
