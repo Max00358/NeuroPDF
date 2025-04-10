@@ -1,5 +1,5 @@
 // to display Questions & Answers (RenderQA)
-import React , { useEffect } from "react";
+import React from "react";
 import { Spin } from "antd";
 
 const containerStyle = {
@@ -20,23 +20,23 @@ const agentContainer = {
 const userStyle = {
     maxWidth: "50%",
     textAlign: "left",
-    backgroundColor: "#1677FF",
+    backgroundColor: "#007AFF", // iMessage blue
     color: "white",
     display: "inline-block",
-    borderRadius: "10px",
     padding: "10px",
-    marginBottom: "5%"
+    marginBottom: "5%",
+    borderRadius: "18px 18px 0px 18px"
 };
 
 const agentStyle = {
     maxWidth: "50%",
     textAlign: "left",
-    backgroundColor: "#F9F9FE",
+    backgroundColor: "#E5E5EA", // iMessage light grey
     color: "black",
     display: "inline-block",
-    borderRadius: "10px",
     padding: "10px",
-    marginBottom: "10%"
+    marginBottom: "10%",
+    borderRadius: "18px 18px 18px 0px"
 };
 
 const RenderQA = (props) => {

@@ -37,14 +37,6 @@ const contentStyles = {
   padding: "0 24px"
 };
 
-const componentWrapper = {
-  backgroundColor: "#fff",
-  borderRadius: "16px",
-  padding: "32px",
-  boxShadow: "0 8px 20px rgba(0, 0, 0, 0.05)",
-  marginBottom: "32px"
-};
-
 const chatComponentStyle = {
   position: "fixed",
   bottom: "0",
@@ -56,7 +48,6 @@ const chatComponentStyle = {
 };
 
 const App = () => {
-  const [filePath, setFilePath] = useState(null);
   const [conversation, setConversation] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const { Header, Content } = Layout;
@@ -73,13 +64,7 @@ const App = () => {
         </Header>
 
         <Content style={contentStyles}>
-          <div style={componentWrapper}>
-            <PdfUploader setFilePath={setFilePath} />
-          </div>
-
-          <div style={componentWrapper} id="chat-scroll-container">
             <RenderQA conversation={conversation} isLoading={isLoading} />
-          </div>
         </Content>
 
         <div style={chatComponentStyle}>
@@ -87,7 +72,6 @@ const App = () => {
             handleResp={handleResp}
             isLoading={isLoading}
             setIsLoading={setIsLoading}
-            filePath={filePath}
           />
         </div>
       </Layout>

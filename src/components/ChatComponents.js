@@ -1,6 +1,7 @@
 import React, { useState, useEffect} from "react";
-import { Button, Input } from "antd";
-import { AudioOutlined, PlayCircleOutlined, PauseCircleOutlined} from "@ant-design/icons";
+import PdfUploader from './PdfUploader';
+import { Button, Input, Popover} from "antd";
+import { AudioOutlined, PlayCircleOutlined, PauseCircleOutlined, PlusCircleOutlined } from "@ant-design/icons";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 import Speech from "speak-tts";
 import axios from "axios";
@@ -14,13 +15,17 @@ const searchContainer = {
 };
 
 const ChatComponent = (props) => {
-    const { handleResp, isLoading, setIsLoading, filePath} = props;
+    const { handleResp, isLoading, setIsLoading} = props;
     // searchValue is user's input text, we dig them out from Search->onSearch
     const [searchValue, setSearchValue] = useState("")
+    const [speech, setSpeech] = useState();
+
     const [isChatModeOn, setIsChatModeOn] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
-    const [speech, setSpeech] = useState();
+    const [isUploadClicked, setIsUploadClicked] = useState(false);
+
+    const [filePath, setFilePath] = useState(null);
 
     const {
         transcript,
@@ -110,6 +115,9 @@ const ChatComponent = (props) => {
             return currPaused;
         });
     };
+    const showUploadHandler = () => {
+        setIsUploadClicked(prev => !prev)
+    };
 
     const handleChange = (e) => {
         setSearchValue(e.target.value);
@@ -184,17 +192,36 @@ const ChatComponent = (props) => {
                 </Button>
             }
             {
-            isChatModeOn &&
+            isChatModeOn && 
                 <Button
                     type="primary"
-                    icon={isPaused? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+                    icon={isPaused && isRecording? <PauseCircleOutlined /> : <PlayCircleOutlined />}
                     size="large"
-                    danger={isPaused}
+                    danger={isPaused && isRecording}
                     onClick={mutingClickHandler}
                     style={{ marginLeft: "5px" }}
                 >
                 </Button>
             }
+
+            <Popover
+                content={<PdfUploader setFilePath={setFilePath} />}
+                title="Upload PDF"
+                trigger="click"
+                open={isUploadClicked}
+                placement="bottomRight" // position of tooltip relative to the target(button)
+                arrow={{ pointAtCenter: true }}
+            >
+                <Button 
+                    type="primary"
+                    size="large"
+                    icon={<PlusCircleOutlined/>}
+                    onClick={showUploadHandler}
+                    style={{ marginLeft: "5px" }}
+                >
+                    Upload
+                </Button>
+            </Popover>
         </div>
     )
 };
