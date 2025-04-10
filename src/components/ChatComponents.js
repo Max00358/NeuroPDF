@@ -156,6 +156,25 @@ const ChatComponent = (props) => {
 
     return (
         <div style={searchContainer}>
+            <Popover
+                content={<PdfUploader setFilePath={setFilePath} />}
+                title="Upload PDF"
+                trigger="click"
+                open={isUploadClicked}
+                placement="bottomLeft" // position of tooltip relative to the target(button)
+                arrow={{ pointAtCenter: true }}
+            >
+                <Button 
+                    type="primary"
+                    size="large"
+                    icon={<PlusCircleOutlined/>}
+                    onClick={showUploadHandler}
+                    style={{ margin: "0 5px 0 5px" }} // Top, right, bottom, left
+                >
+                    Upload
+                </Button>
+            </Popover>
+
             {/* the search bar implementation */}
             {!isChatModeOn &&
                 <Search
@@ -203,25 +222,6 @@ const ChatComponent = (props) => {
                 >
                 </Button>
             }
-
-            <Popover
-                content={<PdfUploader setFilePath={setFilePath} />}
-                title="Upload PDF"
-                trigger="click"
-                open={isUploadClicked}
-                placement="bottomRight" // position of tooltip relative to the target(button)
-                arrow={{ pointAtCenter: true }}
-            >
-                <Button 
-                    type="primary"
-                    size="large"
-                    icon={<PlusCircleOutlined/>}
-                    onClick={showUploadHandler}
-                    style={{ marginLeft: "5px" }}
-                >
-                    Upload
-                </Button>
-            </Popover>
         </div>
     )
 };
