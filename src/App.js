@@ -1,29 +1,34 @@
 // to run both FE and BE concurrently: 
 // under root folder-> npm run dev
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ChatComponent from './components/ChatComponents';
 import RenderQA from './components/RenderQA';
-import { Layout } from "antd";
-import { RightOutlined } from "@ant-design/icons";
+import { Layout, Button } from "antd";
+import { RightOutlined, DownCircleOutlined } from "@ant-design/icons";
 import logo from "./graphics/logo192.png";
 
 const layoutStyles = {
   height: "100vh",
-  backgroundColor: "#f5f6fa", // light neutral
-  fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif"
+  display: "flex",
+  flexDirection: "column",
+  overflow: "auto",
 };
 
 const headerStyles = {
-  backgroundColor: "#f0f2f5", // soft iOS-like gray
+  position: "fixed", // stay fixed to the top
+  top: 0,
+  left: 0,
+  right: 0,
+  backgroundColor: "#f0f2f5",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
   height: "80px",
   padding: "0 24px",
   boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
-  borderBottom: "1px solid #e0e0e0", // iOS subtle divider
-  zIndex: 1
+  borderBottom: "1px solid #e0e0e0",
+  zIndex: 5,     // stays above all content
 };
 
 const profileContainerStyles = {
@@ -47,34 +52,68 @@ const textContainerStyles = {
   gap: "4px",
   fontSize: "15px",
   fontWeight: "500",
-  color: "#4a4a4a" // muted dark gray
+  color: "#4a4a4a"  // muted dark gray
 };
 
 const contentStyles = {
+  flex: 1,
+  overflowY: "auto",
+  padding: "80px 0px 100px 0px",
   width: "100%",
-  maxWidth: "900px",
-  margin: "60px auto 140px auto",
-  padding: "0 24px"
+  marginTop: "80px",
 };
 
 const chatComponentStyle = {
   position: "fixed",
   bottom: "0",
-  width: "100%",
-  left: "0",
+  width: "90%",
+  // left & transform centers the chat components
+  left: "50%",
+  transform: "translateX(-50%)",
   padding: "24px 40px",
-  //backgroundColor: "#ffffff",
-  //boxShadow: "0 -2px 12px rgba(0, 0, 0, 0.05)"
+  backgroundColor: "rgba(245, 246, 250, 0.75)", // translucent
+  backdropFilter: "blur(12px)",                   // blur effect
+  WebkitBackdropFilter: "blur(12px)",             // Safari support
+  zIndex: 10,
+};
+
+const downCircleStyle = {
+  position: "fixed",
+  bottom: "100px",
+  left: "50%",
+  transform: "translateX(-50%)",
+  opacity: 0.9,
+  zIndex: 10
 };
 
 const App = () => {
   const [conversation, setConversation] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const { Header, Content } = Layout;
 
   const handleResp = (question, answer) => {
     setConversation([...conversation, { question, answer }]);
   };
+  const scrollToBottom = () => {
+    const content = document.querySelector(".ant-layout-content");
+    content.scrollTo({
+      top: content.scrollHeight,
+      behavior: "smooth"
+    });
+  };
+  
+  // runs when component mounts (load for the 1st time)
+  useEffect(() => {
+    const content = document.querySelector(".ant-layout-content");
+    const checkScroll = () => {
+      setShowScrollButton(
+        content.scrollHeight - content.scrollTop - content.clientHeight> 100
+      );
+    };
+    content.addEventListener("scroll", checkScroll);
+    return () => content.removeEventListener("scroll", checkScroll);
+  }, []);
 
   return (
     <>
@@ -90,7 +129,22 @@ const App = () => {
         </Header>
 
         <Content style={contentStyles}>
-            <RenderQA conversation={conversation} isLoading={isLoading} />
+          <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 24px" }}>
+            <RenderQA 
+              conversation={conversation} 
+              isLoading={isLoading} 
+            />
+          </div>
+          {
+            showScrollButton &&
+            <Button 
+              type="primary"
+              size="large"
+              icon={<DownCircleOutlined/>}
+              onClick={scrollToBottom}
+              style={downCircleStyle}
+            />
+          }
         </Content>
 
         <div style={chatComponentStyle}>
