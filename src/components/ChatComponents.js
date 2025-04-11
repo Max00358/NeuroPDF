@@ -1,7 +1,7 @@
 import React, { useState, useEffect} from "react";
 import PdfUploader from './PdfUploader';
 import { Button, Input, Popover} from "antd";
-import { AudioOutlined, PlayCircleOutlined, PauseCircleOutlined, PlusCircleOutlined } from "@ant-design/icons";
+import { AudioOutlined, PlayCircleOutlined, PauseCircleOutlined, PlusCircleOutlined, LoadingOutlined} from "@ant-design/icons";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 import Speech from "speak-tts";
 import axios from "axios";
@@ -11,7 +11,7 @@ const DOMAIN = process.env.REACT_APP_DOMAIN;
 
 const searchContainer = {
     display: "flex",
-    justifyContent: "center"
+    justifyContent: "center",
 };
 
 const ChatComponent = (props) => {
@@ -23,7 +23,6 @@ const ChatComponent = (props) => {
     const [isChatModeOn, setIsChatModeOn] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
-    const [isUploadClicked, setIsUploadClicked] = useState(false);
 
     const [filePath, setFilePath] = useState(null);
 
@@ -115,9 +114,6 @@ const ChatComponent = (props) => {
             return currPaused;
         });
     };
-    const showUploadHandler = () => {
-        setIsUploadClicked(prev => !prev)
-    };
 
     const handleChange = (e) => {
         setSearchValue(e.target.value);
@@ -160,7 +156,6 @@ const ChatComponent = (props) => {
                 content={<PdfUploader setFilePath={setFilePath} />}
                 title="Upload PDF"
                 trigger="click"
-                open={isUploadClicked}
                 placement="bottomLeft" // position of tooltip relative to the target(button)
                 arrow={{ pointAtCenter: true }}
             >
@@ -168,8 +163,7 @@ const ChatComponent = (props) => {
                     type="primary"
                     size="large"
                     icon={<PlusCircleOutlined/>}
-                    onClick={showUploadHandler}
-                    style={{ margin: "0 5px 0 5px" }} // Top, right, bottom, left
+                    style={{ margin: "0 5px 0 5px" }} // top, right, bottom, left
                 >
                     Upload
                 </Button>
@@ -177,14 +171,17 @@ const ChatComponent = (props) => {
 
             {/* the search bar implementation */}
             {!isChatModeOn &&
-                <Search
+                <Input
                     placeholder="Ask Anything"
-                    enterButton="Ask"
                     size="large"
                     onSearch={onSearch}
                     loading={isLoading}
                     value={searchValue}
                     onChange={handleChange}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter" && searchValue.trim() !== "") 
+                            onSearch(searchValue); // manually trigger
+                    }}
                 />
             }
             <Button

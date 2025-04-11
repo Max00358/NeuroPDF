@@ -35,7 +35,7 @@ const agentStyle = {
     color: "black",
     display: "inline-block",
     padding: "10px",
-    marginBottom: "10%",
+    marginBottom: "5%",
     borderRadius: "18px 18px 18px 0px"
 };
 
