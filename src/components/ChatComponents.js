@@ -121,7 +121,7 @@ const ChatComponent = (props) => {
     const onSearch = async(question)=>{
         setSearchValue(""); // clear text box after msg sent
         if (!filePath) {
-            handleResp(question, "Please upload a PDF before using chat.");
+            handleResp(question, "Please upload a PDF before using chat.", "");
             setIsLoading(false);
             return;
         }
@@ -132,18 +132,19 @@ const ChatComponent = (props) => {
                 message: question,
                 filePath    // filePath to PDF
             });
-            const response_str = response.data?.answer || "No Response Data :(";
-            handleResp(question, response_str);
+            const answer = response.data?.LLM_response || "No Response Data :(";
+            const highlight_text = response.data?.highlight_text || "No Highlight Text :(";
+            handleResp(question, answer, highlight_text);
             
             if(speech && isChatModeOn){
-                talk(response_str, isPaused);
+                talk(answer, isPaused);
             }
         }
         catch(error){
             console.error(`Error: ${error}`);
             // '?' is nullish-safety check, '?.' is optional chaining
             const safeMsg = error?.response?.data || error.message || "ChatComponents->onSearch Error";
-            handleResp(question, safeMsg.toString());
+            handleResp(question, safeMsg.toString(), "");
         }
         finally{
             setIsLoading(false);

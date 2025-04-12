@@ -76,8 +76,12 @@ app.post("/chat", express.json(), async(req, res)=>{
     }
 
     try {
-        const response = await chat(filePath, finalQuestion);
-        return res.json(response);
+        const { LLM_response, highlight_text } = await chat(filePath, finalQuestion);
+        console.log(`(server.js) finished waiting for chat response`);
+        return res.json({
+            LLM_response: LLM_response,      // LLM response used in ChatComponents
+            highlight_text: highlight_text
+        });
     } catch (error) {
         console.error("Chat Error:", error);
         return res.status(500).send("Error processing the request");

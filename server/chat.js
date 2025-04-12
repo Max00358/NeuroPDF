@@ -1,6 +1,10 @@
 import { RecursiveCharacterTextSplitter, TextSplitter } from "langchain/text_splitter";
 import { PDFLoader } from "langchain/document_loaders/fs/pdf";
 import axios from "axios";
+import { execFile } from "child_process";
+import util from "util";
+
+const execFilePromise = util.promisify(execFile);
 
 const chat = async(filePath = "./uploads/sample-default.pdf", UserQuestion)=>{
     const apiKey = process.env.REACT_APP_DEEPSEEK_API_KEY;
@@ -31,15 +35,21 @@ const chat = async(filePath = "./uploads/sample-default.pdf", UserQuestion)=>{
         messages: [
             {
                 role: "system",
-                content: `Use the following pieces of context to answer the question at the end.
-                        Use one paragraph max and keep the answer as concise as possible.
+                content: `
+                    Use the following context to answer the question at the end.
 
-                        The question will be asked in the below format:
-                        {context}
-                        Question: {question}
+                    First, determine whether answering the question requires referencing a specific part of the context. Start your response with either "yes." or "no." (all lowercase, followed by a period). Then continue with a concise answer in one short paragraph.
 
-                        Respond in below format:
-                        {your answer}`
+                    You will be given:
+
+                    {context}
+                    Question: {question}
+
+                    Final Output:
+                    yes. [Your concise answer here...]
+                    or
+                    no. [Your concise answer here...]
+                `
             },
             {
                 role: "user",
@@ -50,15 +60,43 @@ const chat = async(filePath = "./uploads/sample-default.pdf", UserQuestion)=>{
     };
 
     try{
-        // separate HTTP request sent from backend to DeepSeek API 
+        // separate HTTP request sent from backend to DeepSeek API
+        console.log(`(chat.js) waiting for LLM response...`);
         const response = await axios.post("https://api.deepseek.com/chat/completions", payload, {
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${apiKey}`
             }
         });
+        console.log(`(chat.js) LLM response acquired!`);
         const answer = response.data.choices[0].message.content;
-        return { answer };
+
+        //call python highlight script in virtual env (venv)
+        try {
+            const { stdout, stderr } = await execFilePromise("python3", ["highlight.py", filePath, answer]);
+            const parsed = JSON.parse(stdout);
+            const LLM_response = parsed.answer;
+            const highlight_text = parsed.highlight_text;
+
+            console.log("(chat.js) LLM_response: ", LLM_response);
+            console.log("(chat.js) highlight_text: ", highlight_text);
+
+            // this returns JS object of this form: (All JS obj needs to have key-value pair or else error)
+            //{
+            // answer: "LLM answer",
+            // highlightedPDF : path_to_highlightPDF
+            //}
+            return { 
+                LLM_response: LLM_response, 
+                highlight_text : highlight_text
+            };
+        } catch (err) {
+            console.error("Python error:", err);
+            return {
+                answer, 
+                highlight_text : ""
+            };
+        }
     }
     catch(error){
         console.error('DeepSeek Error:', error.response?.data || error.message);
