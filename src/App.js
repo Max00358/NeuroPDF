@@ -85,14 +85,15 @@ const downCircleStyle = {
 
 const App = () => {
   const [conversation, setConversation] = useState([]);
+  const [conversation_q, setConversationQ] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const { Header, Content } = Layout;
 
-  const handleResp = (question, answer, highlight_text) => {
+  const handleResp = (answer, highlight_text) => {
     // append new {Q, A} into conversation and setState to trigger re-render
     // using append/push will NOT trigger re-render, which is why we don't use it here
-    setConversation([...conversation, { question, answer, highlight_text }]);
+    setConversation([...conversation, { answer, highlight_text }]);
   };
   const scrollToBottom = () => {
     const content = document.querySelector(".ant-layout-content");
@@ -135,7 +136,8 @@ const App = () => {
         <Content style={contentStyles}>
           <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 24px" }}>
             <RenderQA 
-              conversation={conversation} 
+              conversation={conversation}
+              conversation_q={conversation_q}
               isLoading={isLoading} 
             />
           </div>
@@ -156,6 +158,7 @@ const App = () => {
             handleResp={handleResp}
             isLoading={isLoading}
             setIsLoading={setIsLoading}
+            setConversationQ={setConversationQ}
           />
         </div>
       </Layout>

@@ -15,7 +15,7 @@ const searchContainer = {
 };
 
 const ChatComponent = (props) => {
-    const { handleResp, isLoading, setIsLoading} = props;
+    const { handleResp, isLoading, setIsLoading, setConversationQ } = props;
     // searchValue is user's input text, we dig them out from Search->onSearch
     const [searchValue, setSearchValue] = useState("")
     const [speech, setSpeech] = useState();
@@ -119,9 +119,11 @@ const ChatComponent = (props) => {
         setSearchValue(e.target.value);
     };
     const onSearch = async(question)=>{
+        setConversationQ(prev => [...prev, question]);
         setSearchValue(""); // clear text box after msg sent
+        
         if (!filePath) {
-            handleResp(question, "Please upload a PDF before using chat.", "");
+            handleResp("Please upload a PDF before using chat.", "");
             setIsLoading(false);
             return;
         }
@@ -134,7 +136,7 @@ const ChatComponent = (props) => {
             });
             const answer = response.data?.LLM_response || "No Response Data :(";
             const highlight_text = response.data?.highlight_text || "No Highlight Text :(";
-            handleResp(question, answer, highlight_text);
+            handleResp(answer, highlight_text);
             
             if(speech && isChatModeOn){
                 talk(answer, isPaused);
@@ -144,7 +146,7 @@ const ChatComponent = (props) => {
             console.error(`Error: ${error}`);
             // '?' is nullish-safety check, '?.' is optional chaining
             const safeMsg = error?.response?.data || error.message || "ChatComponents->onSearch Error";
-            handleResp(question, safeMsg.toString(), "");
+            handleResp(safeMsg.toString(), "");
         }
         finally{
             setIsLoading(false);
@@ -177,7 +179,7 @@ const ChatComponent = (props) => {
                     size="large"
                     onSearch={onSearch}
                     loading={isLoading}
-                    value={searchValue}
+                    value={searchValue} // user input (question)
                     onChange={handleChange}
                     onKeyDown={(e) => {
                         if (e.key === "Enter" && searchValue.trim() !== "") 

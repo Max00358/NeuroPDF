@@ -8,15 +8,9 @@ const containerStyle = {
     flexDirection: "column",
     marginBottom: "20px"
 };
-
 const userContainer = {
     textAlign: "right"
 };
-
-const agentContainer = {
-    textAlign: "left"
-};
-
 const userStyle = {
     maxWidth: "50%",
     textAlign: "left",
@@ -28,6 +22,9 @@ const userStyle = {
     borderRadius: "18px 18px 0px 18px"
 };
 
+const agentContainer = {
+    textAlign: "left" // left of the entire window
+};
 const agentStyle = {
     maxWidth: "50%",
     textAlign: "left",
@@ -53,27 +50,43 @@ const highlightStyle = {
     boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
     borderRadius: "18px 18px 18px 18px"
 };
+const loadingStyle = {
+    maxWidth: "50%",
+    backgroundColor: "#E5E5EA",          // iMessage light gray
+    borderRadius: "18px 18px 18px 4px",  // iMessage-style bubble
+    padding: "16px",                     // Adequate space for spinner
+    display: "inline-flex",              // For proper bubble sizing
+    justifyContent: "center",
+    alignItems: "center"
+};
   
 
 const RenderQA = (props) => {
-    const { conversation, isLoading } = props;
+    const { conversation, conversation_q, isLoading } = props;
+
+    const formatHighlight = (highlight) => {
+        const raw = Array.isArray(highlight) ? highlight.join(" ") : String(highlight || "");
+        return raw
+            .replace(/\n(?!\n)/g, " ")
+            .replace(/\n\n+/g, "\n\n")
+            .trim();
+    };
 
     return (
         <>
-            {conversation?.map((each, index) => {
-                const rawHighligh = Array.isArray(each.highlight_text) 
-                    ? each.highlight_text.join(" ") : String(each.highlight_text || "");
-            
-                const cleanedHighlight = rawHighligh
-                    .replace(/\n(?!\n)/g, " ")
-                    .replace(/\n\n+/g, "\n\n")
-                    .trim();
-
-                return (
-                    <div key={index} style={containerStyle}>
-                        <div style={userContainer}>
-                            <div style={userStyle}>{each.question}</div>
+            {conversation_q?.map((question, index) => 
+                <div 
+                    key={`q-${index}`}
+                    style={containerStyle}
+                >
+                    <div style={userContainer}>
+                        <div style={userStyle}>
+                            {question}
                         </div>
+                    </div>
+
+                    {/* Display LLM answer if it exists */}
+                    {conversation[index] && (
                         <div style={agentContainer}>
                             <div style={agentStyle}>
                                 <Card
@@ -81,15 +94,29 @@ const RenderQA = (props) => {
                                     hoverable={true}
                                     style={highlightStyle}
                                 >
-                                    "{cleanedHighlight}"
+                                    {
+                                        conversation[index].highlight_text &&
+                                        formatHighlight(conversation[index].highlight_text)
+                                    }
                                 </Card>
-                                {each.answer}
+                                {conversation[index].answer}
                             </div>
                         </div>
-                    </div>
-                );
-            })}
-            {isLoading && <Spin size="large" style={{ margin: "10px" }} />}
+                    )}
+
+                    {/* Show loading indicator for current question */}
+                    {isLoading && index === conversation_q.length - 1 && (
+                        <div style={containerStyle}>
+                            <div style={loadingStyle}>
+                                <Spin 
+                                    size="large"
+                                    percent="auto"
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
         </>
     );
 };
