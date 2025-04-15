@@ -1,32 +1,15 @@
-import { RecursiveCharacterTextSplitter, TextSplitter } from "langchain/text_splitter";
-import { PDFLoader } from "langchain/document_loaders/fs/pdf";
-import axios from "axios";
 import { execFile } from "child_process";
+import axios from "axios";
 import util from "util";
 
 const execFilePromise = util.promisify(execFile);
 
-const chat = async(filePath = "./uploads/sample-default.pdf", UserQuestion)=>{
+const chat = async(filePath, UserQuestion) => {
     const apiKey = process.env.REACT_APP_DEEPSEEK_API_KEY;
-    const loader = new PDFLoader(filePath);
-    const data = await loader.load(); // contains array of pageContent & metadata
 
-    const text_splitter = new RecursiveCharacterTextSplitter({
-        chunkSize: 500,
-        chunkOverlap: 50
-    });
-    const splitDocs = await text_splitter.splitDocuments(data);
-
-    // the entire PDF into context
-    const context = data.map(doc => doc.pageContent).join("\n\n");
-
-    // naive filter to pick relevant chunks based on keyword presence
-    // const relevantChunks = splitDocs
-    //     .filter(doc => doc.pageContent.toLowerCase().includes(UserQuestion.toLowerCase()))
-    //     .map(doc => doc.pageContent)
-    //     .slice(0, 3); // pick top 3 relevant chunks
-
-    // const context = relevantChunks.join("\n\n");
+    // catch the value from returned key-value pair, so stdout & stderr var name is fixed
+    const { stdout, stderr } = await execFilePromise("python3", ["context.py", filePath, UserQuestion]);
+    const context = JSON.parse(stdout).context;
 
     // back-end (server.js) calls front-end (chat.js) 
     // front-end calls LLM API and spits results to back-end
@@ -66,7 +49,8 @@ const chat = async(filePath = "./uploads/sample-default.pdf", UserQuestion)=>{
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${apiKey}`
-            }
+            },
+            timeout: 15000 // 15 seconds
         });
         console.log(`(chat.js) LLM response acquired!`);
         const answer = response.data.choices[0].message.content;
