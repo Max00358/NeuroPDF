@@ -12,6 +12,7 @@ const DOMAIN = process.env.REACT_APP_DOMAIN;
 const searchContainer = {
     display: "flex",
     justifyContent: "center",
+    alignItems: "flex-end" // sticks buttons to the end ("bottom" option doesn't exist)
 };
 
 const ChatComponent = (props) => {
@@ -166,7 +167,10 @@ const ChatComponent = (props) => {
                     type="primary"
                     size="large"
                     icon={<PlusCircleOutlined/>}
-                    style={{ margin: "0 5px 0 5px" }} // top, right, bottom, left
+                    style={{ 
+                        margin: "0 5px 0 5px", // top, right, bottom, left
+                        height: "42px"
+                    }} 
                 >
                     Upload
                 </Button>
@@ -174,16 +178,27 @@ const ChatComponent = (props) => {
 
             {/* the search bar implementation */}
             {!isChatModeOn &&
-                <Input
+                <Input.TextArea // subcomponent: multi-line text box
                     placeholder="Ask Anything"
-                    size="large"
-                    onSearch={onSearch}
-                    loading={isLoading}
-                    value={searchValue} // user input (question)
+                    autoSize={{ 
+                        minRows: 1, 
+                        maxRows: 6 
+                    }}
+                    value={searchValue}
                     onChange={handleChange}
-                    onKeyDown={(e) => {
-                        if (e.key === "Enter" && searchValue.trim() !== "") 
-                            onSearch(searchValue); // manually trigger
+                    onPressEnter={(e) => {
+                        // when enter is pressed but shift is NOT pressed, send LLM the user question
+                        if(!e.shiftKey && searchValue.trim() !== ""){
+                            e.preventDefault();
+                            onSearch(searchValue);
+                        }
+                    }}
+                    style={{ 
+                        flex: 1,
+                        fontSize: "16px",
+                        lineHeight: "1.5", 
+                        padding: "8px 12px",
+                        height: "100%",
                     }}
                 />
             }
@@ -192,7 +207,10 @@ const ChatComponent = (props) => {
                 size="large"
                 danger={isChatModeOn}
                 onClick={chatModeClickHandler}
-                style={{ marginLeft: "5px" }}
+                style={{ 
+                    marginLeft: "5px",
+                    height: "42px"
+                }}
             >
                 Chat Mode: {isChatModeOn? "On" : "Off"}
             </Button>
@@ -205,7 +223,10 @@ const ChatComponent = (props) => {
                     size="large"
                     danger={isRecording}
                     onClick={recordingClickHandler}
-                    style={{ marginLeft: "5px" }}
+                    style={{ 
+                        marginLeft: "5px",
+                        height: "42px"
+                    }}
                 >
                     {isRecording ? "Recording..." : "Click to Record"}
                 </Button>
@@ -218,7 +239,10 @@ const ChatComponent = (props) => {
                     size="large"
                     danger={isPaused && isRecording}
                     onClick={mutingClickHandler}
-                    style={{ marginLeft: "5px" }}
+                    style={{ 
+                        marginLeft: "5px",
+                        height: "42px"
+                    }}
                 >
                 </Button>
             }
