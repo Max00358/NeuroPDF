@@ -1,7 +1,7 @@
-import React, { useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import PdfUploader from './PdfUploader';
-import { Button, Input, Popover} from "antd";
-import { AudioOutlined, PlayCircleOutlined, PauseCircleOutlined, PlusCircleOutlined, LoadingOutlined} from "@ant-design/icons";
+import { Button, Input, Popover } from "antd";
+import { AudioOutlined, PlayCircleOutlined, PauseCircleOutlined, PlusCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 import Speech from "speak-tts";
 import axios from "axios";
@@ -198,7 +198,6 @@ const ChatComponent = (props) => {
                         fontSize: "16px",
                         lineHeight: "1.5", 
                         padding: "8px 12px",
-                        height: "100%",
                     }}
                 />
             }
