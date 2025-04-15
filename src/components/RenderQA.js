@@ -71,6 +71,13 @@ const RenderQA = (props) => {
             .replace(/\n\n+/g, "\n\n")
             .trim();
     };
+    const formatResponse = (answer) => {
+        let response = "";
+        for(const a of answer){
+            response += (a + ". ");
+        }
+        return response;
+    }
 
     return (
         <>
@@ -89,17 +96,23 @@ const RenderQA = (props) => {
                     {conversation[index] && (
                         <div style={agentContainer}>
                             <div style={agentStyle}>
-                                <Card
-                                    title="Relevant Context"
-                                    hoverable={true}
-                                    style={highlightStyle}
-                                >
-                                    {
-                                        conversation[index].highlight_text &&
-                                        formatHighlight(conversation[index].highlight_text)
-                                    }
-                                </Card>
-                                {conversation[index].answer}
+                                {
+                                    conversation[index].highlight_text?.length > 0 &&
+                                    <Card
+                                        title="Relevant Context"
+                                        hoverable={true}
+                                        style={highlightStyle}
+                                    >
+                                        "
+                                        {
+                                            formatHighlight(conversation[index].highlight_text)
+                                        }
+                                        "
+                                    </Card>
+                                }
+                                {
+                                    formatResponse(conversation[index].answer)
+                                }
                             </div>
                         </div>
                     )}

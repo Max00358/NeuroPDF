@@ -1,7 +1,6 @@
 import fitz
 import json
 import sys
-# from difflib import SequenceMatcher
 from rapidfuzz import fuzz
 
 pdf_path = sys.argv[1]
