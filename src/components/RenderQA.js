@@ -1,6 +1,7 @@
 // to display Questions & Answers (RenderQA)
 import React from "react";
-import { Spin, Card } from "antd";
+import { Spin, Card, Button, message } from "antd";
+import { CopyOutlined } from "@ant-design/icons";
 
 const containerStyle = {
     display: "flex",
@@ -32,7 +33,7 @@ const agentStyle = {
     color: "black",
     display: "inline-block",
     padding: "10px",
-    marginBottom: "5%",
+    marginBottom: "1%",
     borderRadius: "18px 18px 18px 0px"
 };
 
@@ -59,10 +60,14 @@ const loadingStyle = {
     justifyContent: "center",
     alignItems: "center"
 };
+const copyStyle = {
+    backgroundColor: ""
+}
   
 
 const RenderQA = (props) => {
     const { conversation, conversation_q, isLoading } = props;
+    const [ messageApi, contextHolder ] = message.useMessage();
 
     const formatHighlight = (highlight) => {
         const raw = Array.isArray(highlight) ? highlight.join(" ") : String(highlight || "");
@@ -77,6 +82,23 @@ const RenderQA = (props) => {
             response += (a + ". ");
         }
         return response;
+    }
+    const copyToClipboard = (text, type) => {
+        navigator.clipboard.writeText(text)
+            .then(() => {                
+                // makes "Copied!" msg disappear after 1.5 seconds
+                setTimeout(() => {
+                    messageApi.open({
+                        key: 'updatable',
+                        type: 'success',
+                        content: (type === "context")? 'Context Copied!' : 'Answer Copied!',
+                        duration: 2,
+                    });
+                });
+            })
+            .catch((err) => {
+                console.error("(RenderQA.js) Copy failed: ", err);
+            })
     }
 
     return (
@@ -101,6 +123,7 @@ const RenderQA = (props) => {
                                     <Card
                                         title="Relevant Context"
                                         hoverable={true}
+                                        onClick={() => copyToClipboard(formatHighlight(conversation[index].highlight_text), "context")}
                                         style={highlightStyle}
                                     >
                                         "
@@ -116,6 +139,22 @@ const RenderQA = (props) => {
                             </div>
                         </div>
                     )}
+
+                    {/* Copy Button under LLM response */}
+                    <div>  
+                        {
+                        !isLoading &&
+                        <>
+                            {/* contextHolder makes sure msg gets displayed after click */}
+                            {contextHolder} 
+                            <Button
+                                icon={<CopyOutlined/>}
+                                style={copyStyle}
+                                onClick={() => copyToClipboard(formatResponse(conversation[index].answer), "answer")}
+                            />
+                        </>
+                        }
+                    </div>
 
                     {/* Show loading indicator for current question */}
                     {isLoading && index === conversation_q.length - 1 && (

@@ -2,7 +2,7 @@
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import FAISS
+from langchain_community.vectorstores import FAISS      # lightweight vector search engine
 import json
 import sys
 import os
@@ -15,6 +15,7 @@ docs = loader.load() # contains array of pageContent & metadata
 
 index_path = "./uploads/PDF_vector_cache"
 embedding_model = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+
 if os.path.exists(index_path):
     vectorstore = FAISS.load_local(index_path, embedding_model, allow_dangerous_deserialization=True)
     print("Caching succeeded", file=sys.stderr)
