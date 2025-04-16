@@ -3,13 +3,16 @@ import axios from "axios";
 const chat = async(filePath, UserQuestion) => {
     const API_KEY = process.env.REACT_APP_DEEPSEEK_API_KEY;
 
+    const start = performance.now()
     const API_URL = 'http://127.0.0.1:7860';
     const contextResp = await axios.post(`${API_URL}/context`, {
         filePath,
         question: UserQuestion
-      });
+    });
+    const end = performance.now()
     const context = contextResp.data.context;
     const highlight_text = contextResp.data.highlight_text;
+    console.log(`Calling /context for ${(end - start)/1000} seconds`)
 
     // back-end (server.js) calls front-end (chat.js) 
     // front-end calls LLM API and spits results to back-end
