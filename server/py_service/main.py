@@ -1,6 +1,8 @@
 # Applying Python microservice (FastAPI) rather than subprocesses
     # no cold start delay from starting up new python procecess
     # ready to scale/deploy to backend services
+    # FastAPI hosts the get_context function so the server is always running
+    # unlike child_process.exec() that starts & dies per request
 
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -10,10 +12,9 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS      # lightweight vector search engine
 import os, sys
 
-
 app = FastAPI()
 index_path = "../uploads/PDF_vector_cache"
-embedding_model = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+embedding_model = None
 
 # schema
 class ContextRequest(BaseModel):
@@ -23,6 +24,10 @@ class ContextRequest(BaseModel):
 # context endpoint (RAG)
 @app.post("/context")
 async def get_context(req: ContextRequest): # incoming req should be parsed & validated into "ContextRequest" instance
+    global embedding_model # tell Py interpretor this var is not local to get_context function
+    if embedding_model is None:
+        embedding_model = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+    
     question = req.question
     loader = PyMuPDFLoader(os.path.join("..", req.filePath))
     docs = loader.load()              # contains array of pageContent & metadata
