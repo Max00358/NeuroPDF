@@ -13,6 +13,8 @@ uploads
 /build
 
 # misc
+__pycache__/
+*.py[cod]
 venv/
 .DS_Store
 .env

@@ -1,16 +1,15 @@
-import { execFile } from "child_process";
 import axios from "axios";
-import util from "util";
-
-const execFilePromise = util.promisify(execFile);
 
 const chat = async(filePath, UserQuestion) => {
-    const apiKey = process.env.REACT_APP_DEEPSEEK_API_KEY;
+    const API_KEY = process.env.REACT_APP_DEEPSEEK_API_KEY;
 
-    // catch the value from returned key-value pair, so stdout & stderr var name is fixed
-    const { stdout, stderr } = await execFilePromise("python3", ["context.py", filePath, UserQuestion]);
-    const context = JSON.parse(stdout).context;
-    const highlight_text = JSON.parse(stdout).highlight_text;
+    const API_URL = 'http://127.0.0.1:7860';
+    const contextResp = await axios.post(`${API_URL}/context`, {
+        filePath,
+        question: UserQuestion
+      });
+    const context = contextResp.data.context;
+    const highlight_text = contextResp.data.highlight_text;
 
     // back-end (server.js) calls front-end (chat.js) 
     // front-end calls LLM API and spits results to back-end
@@ -46,7 +45,7 @@ const chat = async(filePath, UserQuestion) => {
         const response = await axios.post("https://api.deepseek.com/chat/completions", payload, {
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${apiKey}`
+                "Authorization": `Bearer ${API_KEY}`
             },
             timeout: 15000 // 15 seconds
         });
