@@ -136,7 +136,7 @@ const ChatComponent = (props) => {
                 filePath    // filePath to PDF
             });
             const answer = response.data?.LLM_response || "No Response Data :(";
-            const highlight_text = response.data?.highlight_text || "No Highlight Text :(";
+            const highlight_text = response.data?.highlight_text;
             handleResp(answer, highlight_text);
             
             if(speech && isChatModeOn){

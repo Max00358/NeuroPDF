@@ -76,16 +76,9 @@ const RenderQA = (props) => {
             .replace(/\n\n+/g, "\n\n")
             .trim();
     };
-    const formatResponse = (answer) => {
-        let response = "";
-        for(const a of answer){
-            response += (a + ". ");
-        }
-        return response;
-    }
     const copyToClipboard = (text, type) => {
         navigator.clipboard.writeText(text)
-            .then(() => {                
+            .then(() => {
                 // makes "Copied!" msg disappear after 1.5 seconds
                 setTimeout(() => {
                     messageApi.open({
@@ -134,7 +127,7 @@ const RenderQA = (props) => {
                                     </Card>
                                 }
                                 {
-                                    formatResponse(conversation[index].answer)
+                                    conversation[index].answer
                                 }
                             </div>
                         </div>
@@ -150,7 +143,7 @@ const RenderQA = (props) => {
                             <Button
                                 icon={<CopyOutlined/>}
                                 style={copyStyle}
-                                onClick={() => copyToClipboard(formatResponse(conversation[index].answer), "answer")}
+                                onClick={() => copyToClipboard(conversation[index].answer, "answer")}
                             />
                         </>
                         }
