@@ -1,7 +1,7 @@
 # RAG
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS      # lightweight vector search engine
 import json
 import sys
@@ -26,9 +26,23 @@ else:
     vectorstore = FAISS.from_documents(split_docs, embedding_model)
     vectorstore.save_local(index_path) # cache the PDF content
 
-docs = vectorstore.similarity_search(question, k=3) # find top 3 relevant chunks
-context = "\n\n".join([doc.page_content for doc in docs]) # adding \n\n to help LLM visually understand context better
+# find top 3 relevant chunks
+# docs = [(Document(...), score), (Document(...), score), ...]
+docs = vectorstore.similarity_search_with_score(question, k=3)
+filtered_doc = [doc for doc, score in docs if score < 0.55] # lower score = more similarity
+
+if not filtered_doc:
+    print(json.dumps({
+        "context" : "",
+        "highlight": ""
+    }))
+    sys.exit(0)
+
+# print("filtered doc: ", filtered_doc)
+highlight_text = filtered_doc[0].page_content                  # top 1 relevant chunk is highlight
+context = "\n\n".join([doc.page_content for doc, _ in docs])   # adding \n\n to help LLM visually understand context better
 
 print(json.dumps({
         "context" : context,
+        "highlight_text": highlight_text
     }))

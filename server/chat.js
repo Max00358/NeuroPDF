@@ -10,6 +10,7 @@ const chat = async(filePath, UserQuestion) => {
     // catch the value from returned key-value pair, so stdout & stderr var name is fixed
     const { stdout, stderr } = await execFilePromise("python3", ["context.py", filePath, UserQuestion]);
     const context = JSON.parse(stdout).context;
+    const highlight_text = JSON.parse(stdout).highlight_text;
 
     // back-end (server.js) calls front-end (chat.js) 
     // front-end calls LLM API and spits results to back-end
@@ -21,17 +22,14 @@ const chat = async(filePath, UserQuestion) => {
                 content: `
                     Use the following context to answer the question at the end.
 
-                    First, determine whether answering the question requires referencing a specific part of the context. Start your response with either "yes." or "no." (all lowercase, followed by a period). Then continue with a concise answer in one short paragraph.
+                    Provide a concise answer in one short paragraph.
 
                     You will be given:
 
-                    {context}
-                    Question: {question}
+                    {Context}
+                    Question: {Question}
 
-                    Final Output:
-                    yes. [Your concise answer here...]
-                    or
-                    no. [Your concise answer here...]
+                    [Your concise answer here...]
                 `
             },
             {
@@ -53,34 +51,12 @@ const chat = async(filePath, UserQuestion) => {
             timeout: 15000 // 15 seconds
         });
         console.log(`(chat.js) LLM response acquired!`);
+
         const answer = response.data.choices[0].message.content;
-
-        //call python highlight script in virtual env (venv)
-        try {
-            const { stdout, stderr } = await execFilePromise("python3", ["highlight.py", filePath, answer]);
-            const parsed = JSON.parse(stdout);
-            const LLM_response = parsed.answer;
-            const highlight_text = parsed.highlight_text;
-
-            console.log("(chat.js) LLM_response: ", LLM_response);
-            console.log("(chat.js) highlight_text: ", highlight_text);
-
-            // this returns JS object of this form: (All JS obj needs to have key-value pair or else error)
-            //{
-            // answer: "LLM answer",
-            // highlightedPDF : path_to_highlightPDF
-            //}
-            return { 
-                LLM_response: LLM_response, 
-                highlight_text : highlight_text
-            };
-        } catch (err) {
-            console.error("Python error:", err);
-            return {
-                answer, 
-                highlight_text : ""
-            };
-        }
+        return { 
+            LLM_response: answer, 
+            highlight_text : highlight_text
+        };
     }
     catch(error){
         console.error('DeepSeek Error:', error.response?.data || error.message);
