@@ -60,9 +60,7 @@ app.post("/upload", clearBeforeUpload, upload.single("file"), async(req, res) =>
 });
 
 // backend expects POST request
-app.post("/chat", express.json(), async(req, res)=>{
-    const apiKey = process.env.REACT_APP_DEEPSEEK_API_KEY;
-    
+app.post("/chat", express.json(), async(req, res)=>{    
     // Handle question from URL parameter (from Postman)
     // e.g. http://localhost:5001/chat?question='Does this student reveal his aura through his writing?'
     const urlQuestion = req.query.question; // comes from Postman or Url requests
