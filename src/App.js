@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import ChatComponent from './components/ChatComponents';
 import RenderQA from './components/RenderQA';
+import TreeGraph from './components/Tree';
 import { Layout, Button, Avatar } from "antd";
 import { RightOutlined, DownCircleOutlined } from "@ant-design/icons";
 import logo from "./graphics/logo192.png";
@@ -83,11 +84,32 @@ const downCircleStyle = {
   zIndex: 10
 };
 
+const treeOverlayStyle = {
+  position: "absolute",
+  top: "35px",
+  left: 0,
+  right: 0,
+  bottom: 0,
+  zIndex: 2,
+  padding: "40px",
+  justifyContent: "center",
+
+  // backgroundColor: "rgba(103, 102, 102, 0)",
+  // backdropFilter: "blur(6px)",
+};
+
 const App = () => {
   const [conversation, setConversation] = useState([]);
   const [conversation_q, setConversationQ] = useState([]);
+
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploaded, setIsUploaded] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [showTree, setShowTree] = useState(false);
+
+  const [filePath, setFilePath] = useState(null);
+  const [treeData, setTreeData] = useState(null);
+
   const { Header, Content } = Layout;
 
   const handleResp = (answer, highlight_text) => {
@@ -102,7 +124,7 @@ const App = () => {
       behavior: "smooth"
     });
   };
-  
+
   // runs when component mounts (load for the 1st time)
   useEffect(() => {
     const content = document.querySelector(".ant-layout-content");
@@ -118,14 +140,17 @@ const App = () => {
   return (
     <>
       <Layout style={layoutStyles}>
-        <Header style={headerStyles}>
+        <Header 
+          id='top_header' 
+          style={headerStyles}
+        >
           <div style={profileContainerStyles}>
             <Avatar 
               src={logo}
               size="large"
               style={logoStyles}
               alt="NeuroPDF Logo"
-            />
+          />
             <div style={textContainerStyles}>
               NeuroPDF
               <RightOutlined />
@@ -135,10 +160,15 @@ const App = () => {
 
         <Content style={contentStyles}>
           <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 24px" }}>
+            { isUploaded && (
+                <div style={treeOverlayStyle}>
+                  <TreeGraph
+                      data={{ filePath, treeData, setTreeData, showTree, setShowTree }}
+                  />
+                </div>
+            )}
             <RenderQA 
-              conversation={conversation}
-              conversation_q={conversation_q}
-              isLoading={isLoading} 
+              chatState={{ conversation, conversation_q, isLoading }}
             />
           </div>
           {
@@ -156,9 +186,12 @@ const App = () => {
         <div style={chatComponentStyle}>
           <ChatComponent
             handleResp={handleResp}
-            isLoading={isLoading}
             setIsLoading={setIsLoading}
             setConversationQ={setConversationQ}
+            filePath={filePath}
+            setFilePath={setFilePath}
+            setIsUploaded={setIsUploaded}
+            setTreeData={setTreeData}
           />
         </div>
       </Layout>

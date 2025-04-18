@@ -16,7 +16,7 @@ const searchContainer = {
 };
 
 const ChatComponent = (props) => {
-    const { handleResp, isLoading, setIsLoading, setConversationQ } = props;
+    const { handleResp, setIsLoading, setConversationQ, filePath, setFilePath, setIsUploaded, setTreeData } = props;
     // searchValue is user's input text, we dig them out from Search->onSearch
     const [searchValue, setSearchValue] = useState("")
     const [speech, setSpeech] = useState();
@@ -24,8 +24,6 @@ const ChatComponent = (props) => {
     const [isChatModeOn, setIsChatModeOn] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
-
-    const [filePath, setFilePath] = useState(null);
 
     const {
         transcript,
@@ -157,7 +155,13 @@ const ChatComponent = (props) => {
     return (
         <div style={searchContainer}>
             <Popover
-                content={<PdfUploader setFilePath={setFilePath} />}
+                content={
+                    <PdfUploader 
+                        setFilePath={setFilePath} 
+                        setIsUploaded={setIsUploaded}
+                        setTreeData={setTreeData}
+                    />
+                }
                 title="Upload PDF"
                 trigger="click"
                 placement="bottomLeft" // position of tooltip relative to the target(button)

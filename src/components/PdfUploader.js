@@ -9,7 +9,7 @@ const DOMAIN = "http://localhost:5001";
 const PdfUploader = (props) => {
     // props is an obj, so we use {...} to catch it
     // useState returns an array, so we use [...] to catch it
-    const {setFilePath} = props;
+    const { setFilePath, setIsUploaded, setTreeData } = props;
     const [fileList, setFileList] = useState([]);
 
     const uploadToBackend = async(file) => {
@@ -24,6 +24,8 @@ const PdfUploader = (props) => {
             });
             const { filePath } = response.data;
             setFilePath(filePath);
+            setIsUploaded(true);
+
             return filePath;
         }
         catch(error){
@@ -74,6 +76,9 @@ const PdfUploader = (props) => {
         },
         onRemove: (file) => {
             setFileList([]);
+            setFilePath(null);
+            setIsUploaded(false);
+            setTreeData(null);
             return true;
         }
     };
