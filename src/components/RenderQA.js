@@ -63,10 +63,9 @@ const loadingStyle = {
 const copyStyle = {
     backgroundColor: ""
 }
-  
 
-const RenderQA = (props) => {
-    const { conversation, conversation_q, isLoading } = props;
+const RenderQA = ({ chatState }) => {
+    const { conversation, conversation_q, isLoading } = chatState;
     const [ messageApi, contextHolder ] = message.useMessage();
 
     const formatHighlight = (highlight) => {
@@ -95,7 +94,7 @@ const RenderQA = (props) => {
     }
 
     return (
-        <>
+        <>  
             {conversation_q?.map((question, index) => 
                 <div 
                     key={`q-${index}`}

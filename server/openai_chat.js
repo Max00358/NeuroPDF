@@ -30,7 +30,7 @@ const openai_chat = async(filePath = "./uploads/sample-default.pdf", query) => {
 
     // convert text chunks into numerical vectors
     const embeddings = new OpenAIEmbeddings({
-        openAIApiKey: process.env.REACT_APP_OPENAI_API_KEY,
+        openAIApiKey: process.env.OPENAI_API_KEY,
     });
 
     // store embeddings in memory for similarity search
