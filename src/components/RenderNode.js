@@ -37,32 +37,45 @@ const renderNode = ({ nodeDatum }) => {
 	const isParent = nodeDatum.children && nodeDatum.children.length > 0;
 
 	return (
-		<g>
+		<>
 			<rect
 				x={-width / 2}
 				y={-height / 2}
 				width={width}
 				height={height}
-				rx={10}
-				ry={10}
+				rx={12}
+				ry={12}
 				fill="#ffffff"
-				stroke="#1890ff"
-				strokeWidth={2}
+				stroke="#dcdcdc"
+				strokeWidth={1}
+				filter="drop-shadow(0px 2px 6px rgba(0,0,0,0.1))"
 			/>
-			{lines.map((line, i) => (
-				<text
-					key={i}
-					x={0}
-					y={-height / 2 + 20 + i * lineHeight}
-					textAnchor="middle"
-					fill="#333"
-					fontSize="12"
-					fontWeight={i === 0 ? 200 : 50}
-				>
-					{line}
-				</text>
-			))}
-		</g>
+			{lines.map((line, i) => {
+				const isTitle = i === 0;
+				const isPage = i === lines.length - 1 && pageLine.length === 1;
+				const y = -height / 2 + 22 + i * lineHeight;
+
+				return (
+					<text
+						key={i}
+						x={0}
+						y={y}
+						textAnchor="middle"
+						fontSize={isTitle ? "11" : isPage ? "9" : "10"}
+						fontWeight={isTitle ? 700 : isPage ? 200 : 400}
+
+						//stops .rd3t-node & .rd3t-leaf-node from affecting text thickness
+						stroke="none"
+          				strokeWidth={0}
+
+						fill={isTitle ? "#111" : isPage ? "#999" : "#444"}
+						style={{ fontFamily: "system-ui, sans-serif" }}
+					>
+						{line}
+					</text>
+				)
+			})}
+		</>
 	);
 };
 
