@@ -89,7 +89,6 @@ const treeOverlayStyle = {
 	top: "35px",
 	left: 0,
 	right: 0,
-	bottom: "calc(80px + 60px)",
 	zIndex: 2,
 	padding: "40px",
 	justifyContent: "center",
@@ -141,7 +140,6 @@ const App = () => {
 	<>
 	<Layout style={layoutStyles}>
 		<Header 
-			id='top_header' 
 			style={headerStyles}
 		>
 		<div style={profileContainerStyles}>

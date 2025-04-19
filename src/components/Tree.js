@@ -172,20 +172,11 @@ const TreeGraph = React.memo(({ data }) => {
                         zoomable={true}
                         collapsible={false}
                         separation={{
-                            siblings: 1.5,
+                            siblings: 1.7,
                             nonSiblings: 2
                         }}
                         renderCustomNodeElement={renderNode}
-                        nodeSvgShape={{ shape: "none" }}
-
                         styles={{
-                            nodes: {
-                                node: {
-                                  circle: {
-                                    display: "none"
-                                  }
-                                }
-                            },
                             links: { stroke: '#a0a0a0', strokeWidth: 2, fill: '0' },
                         }}
                     />
