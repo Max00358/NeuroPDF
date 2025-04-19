@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import ReactD3Tree from "react-d3-tree";
 import { CloseCircleOutlined } from "@ant-design/icons";
-import { Button, Card, message } from "antd";
+import { Button, message } from "antd";
+import renderNode from "./RenderNode";
 
 const TreeGraph = React.memo(({ data }) => {
     const { filePath, treeData, setTreeData, showTree, setShowTree } = data;
 
-    const memoizedTreeData = useMemo(() => treeData, [treeData]);
     const [ messageApi, contextHolder ] = message.useMessage();
 
     const hasFetchedRef = useRef(false);
@@ -61,46 +61,10 @@ const TreeGraph = React.memo(({ data }) => {
         margin: '70px 0 0 0',
     };
 
-    // Memoize node rendering function
-    const renderNode = useCallback(({ nodeDatum }) => {
-        return (
-            <g>
-                <rect
-                    x="-100"
-                    y="-20"
-                    width="200"
-                    height="50"
-                    rx="20"
-                    fill="#1890ff"
-                />
-                <text
-                    fill="#ffffff"
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    style={{ fontSize: '12px', fontWeight: 100 }}
-                >
-                    {nodeDatum.name}
-                </text>
-                
-                {nodeDatum.attributes?.page && (
-                    <text
-                        x="0"
-                        y="20"
-                        textAnchor="middle"
-                        fill="#ffffff"
-                        style={{ fontSize: '10px', fontWeight: 80 }}
-                    >
-                        Page {nodeDatum.attributes.page}
-                    </text>
-                )}
-            </g>
-        );
-    }, []);
-
     useEffect(() => {
         if(showTree && containerRef.current){
             const { width, height } = containerRef.current.getBoundingClientRect();
-            setTranslate({ x: width/2, y: 110 }); // height/10
+            setTranslate({ x: width/2, y: height/5 });
         }
     }, [showTree, treeData]);
 
@@ -200,9 +164,9 @@ const TreeGraph = React.memo(({ data }) => {
                         onClick={() => setShowTree(false)}
                         style={treeCloseButtonStyle}
                     />
-
+                    
                     <ReactD3Tree
-                        data={memoizedTreeData}
+                        data={treeData}
                         orientation="vertical"
                         translate={translate}
                         zoomable={true}
@@ -212,11 +176,17 @@ const TreeGraph = React.memo(({ data }) => {
                             nonSiblings: 2
                         }}
                         renderCustomNodeElement={renderNode}
+                        nodeSvgShape={{ shape: "none" }}
+
                         styles={{
-                            links: {
-                                stroke: '#a0a0a0',
-                                strokeWidth: 1,
-                            }
+                            nodes: {
+                                node: {
+                                  circle: {
+                                    display: "none"
+                                  }
+                                }
+                            },
+                            links: { stroke: '#a0a0a0', strokeWidth: 2, fill: '0' },
                         }}
                     />
                 </div>

@@ -42,13 +42,24 @@ const PORT = 5001;
 const clearBeforeUpload = async(req, res, next) => {
     const uploadsFolder = path.join(__dirname, "uploads");
     try{
-        const files = await fs.readdir(uploadsFolder);
-        for(const file of files){
-            console.log(`(server.js->clearBeforeUpload) deleting file: ${file}...`);
-            await fs.unlink(path.join(uploadsFolder, file));
+        const items = await fs.readdir(uploadsFolder);
+
+        const removalPromises = items.map(item => {
+            const itemPath = path.join(uploadsFolder, item);
+            console.log(`(server.js->clearBeforeUpload) deleting: ${itemPath}`);
+
+            return fs.rm(itemPath, { recursive: true, force: true });
+        });
+
+        const complete = await Promise.all(removalPromises);
+        console.log(`(server.js->clearBeforeUpload) Deletoin completed.`);
+    } catch(error){
+        if (error.code === 'ENOENT') {
+            console.log(`(server.js->clearBeforeUpload) Directory ${uploadsFolder} does not exist.`);
         }
-    } catch(e){
-        console.error();
+        else{
+            console.error(`(server.js->clearBeforeUpload) Error clearing directory ${uploadsFolder}:`, error);
+        }
     }
 
     next(); // move onto next function, if no next(), then request hangs indefinitely

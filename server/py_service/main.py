@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 import json, httpx, os, sys
 
 app = FastAPI()
-index_path = "../uploads/PDF_vector_cache"
+index_path = "../vs_eng_cache"
 embedding_model = HuggingFaceEmbeddings(
     model_name="all-MiniLM-L6-v2",
     model_kwargs={"device": "cpu"}
@@ -63,6 +63,9 @@ def build_tree_background(filePath: str, treePath: str):
         split_docs = text_splitter.split_documents(docs)
 
         vectorstore = FAISS.from_documents(split_docs, embedding_model)
+
+        treeDir = os.path.join(os.path.dirname(__file__), index_path)
+        os.makedirs(treeDir, exist_ok=True)
         vectorstore.save_local(index_path) # cache the PDF content
 
         payload = {
@@ -85,7 +88,7 @@ def build_tree_background(filePath: str, treePath: str):
                                 "name": string (section heading),
                                 "attributes": {
                                     "page": number (1-based),
-                                    "content_preview": string (max 40 words)
+                                    "content_preview": string (max 20 words)
                                 },
                                 "children?": [...] (subsections)
                                 }
