@@ -6,6 +6,7 @@
 
 from fastapi import FastAPI
 from pydantic import BaseModel
+from transformers import AutoTokenizer
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -13,7 +14,8 @@ from langchain_community.vectorstores import FAISS      # lightweight vector sea
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import BackgroundTasks
 from dotenv import load_dotenv
-import json, httpx, os, sys
+import dirtyjson
+import json, httpx, os, re
 
 app = FastAPI()
 index_path = "../vs_eng_cache"
@@ -59,8 +61,15 @@ def build_tree_background(filePath: str, treePath: str):
         docs = loader.load()              # contains array of pageContent & metadata
 
         # call get_tree once only, hence "index_path" do not exist
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=10) # 50
         split_docs = text_splitter.split_documents(docs)
+
+        tokenizer = AutoTokenizer.from_pretrained("deepseek-ai/deepseek-llm-7b-base")
+        total_tokens = sum(len(tokenizer.tokenize(doc.page_content)) for doc in split_docs)
+        print(f"(main.py->background_task) Total token count: {total_tokens}")
+
+        # to reduce tokens used
+        final_input = "\n".join(doc.page_content.strip() for doc in split_docs)
 
         vectorstore = FAISS.from_documents(split_docs, embedding_model)
 
@@ -74,7 +83,7 @@ def build_tree_background(filePath: str, treePath: str):
                 {
                     "role": "system",
                     "content": '''
-                        You are a JSON expert. You MUST return JSON in this EXACT structure:
+                        Act like a strict JSON expert. You MUST return JSON in this EXACT structure:
 
                         {
                             "name": string (document title),
@@ -88,7 +97,7 @@ def build_tree_background(filePath: str, treePath: str):
                                 "name": string (section heading),
                                 "attributes": {
                                     "page": number (1-based),
-                                    "content_preview": string (max 20 words)
+                                    "content_preview": string (max 15 words)
                                 },
                                 "children?": [...] (subsections)
                                 }
@@ -107,19 +116,32 @@ def build_tree_background(filePath: str, treePath: str):
                 },
                 {
                     "role": "user",
-                    "content": f"{split_docs}"
+                    "content": f"{final_input}"
                 }
             ],
             "stream": False
         }
+        print("(main.py->background_task) waiting for LLM Json tree response...")
         response = httpx.post(
             "https://api.deepseek.com/chat/completions",
             json=payload,
             headers={ "Authorization": f"Bearer {API_KEY}" },
             timeout=15000  # 15 seconds
         )
+        print("(main.py->background_task) obtained LLM Json tree response...")
         answer = response.json()["choices"][0]["message"]["content"]
-        tree = json.loads(answer)
+        
+        try:
+            cleaned = re.sub(r"^```(?:json)?\s*", "", answer.strip())
+            cleaned = re.sub(r"\s*```$", "", cleaned.strip())
+            tree = json.loads(cleaned)
+        except json.JSONDecodeError:
+            try:
+                print("(main.py->background_task) Falling back to dirtyjson...")
+                tree = dirtyjson.loads(answer)
+            except Exception as e:
+                print("(main.py->background_task) Still failed to parse JSON:", e)
+                print("(main.py->background_task) Raw LLM response:", repr(answer))
 
         with open(treePath, 'w') as f:
             json.dump(tree, f)

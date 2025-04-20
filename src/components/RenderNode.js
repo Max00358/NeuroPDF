@@ -26,7 +26,7 @@ const renderNode = ({ nodeDatum }) => {
 	const width = 200;
 	const lineHeight = 16;
 
-	const nameLine = [nodeDatum.name];
+	const nameLine = wrapText(nodeDatum.name);
 	const previewLines = wrapText(nodeDatum.attributes?.content_preview);
 	const pageLine = nodeDatum.attributes?.page
 		? [`Page ${nodeDatum.attributes.page}`]
@@ -34,7 +34,8 @@ const renderNode = ({ nodeDatum }) => {
 
 	const lines = [...nameLine, ...previewLines, ...pageLine];
 	const height = lines.length * lineHeight + 20;
-	const isParent = nodeDatum.children && nodeDatum.children.length > 0;
+	const nameEndIndex = nameLine.length - 1;
+	const previewEndIndex = nameLine.length + previewLines.length - 1;
 
 	return (
 		<>
@@ -51,8 +52,8 @@ const renderNode = ({ nodeDatum }) => {
 				filter="drop-shadow(0px 2px 6px rgba(0,0,0,0.1))"
 			/>
 			{lines.map((line, i) => {
-				const isTitle = i === 0;
-				const isPage = i === lines.length - 1 && pageLine.length === 1;
+				const isTitle = i <= nameEndIndex;
+				const isPage = i === previewEndIndex + 1 && pageLine.length === 1;
 				const y = -height / 2 + 22 + i * lineHeight;
 
 				return (
