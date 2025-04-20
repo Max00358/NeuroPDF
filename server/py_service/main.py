@@ -187,7 +187,6 @@ vs_map: dict[str, FAISS] = {} # store vectorstores
 @app.post("/chat")
 async def get_context(req: ContextRequest): # incoming req should be parsed & validated into "ContextRequest" instance    
     question = req.question
-    print(f"(main.py) upload file path: {req.filePath}")
     
     # if upload path not in memory, build it
     vectorstore = None
@@ -208,14 +207,7 @@ async def get_context(req: ContextRequest): # incoming req should be parsed & va
     docs = vectorstore.similarity_search_with_score(question, k=3)
     filtered_doc = [doc for doc, score in docs if score < 0.55] # lower score = more similarity
 
-    if not filtered_doc:
-        return {
-            "LLM_response": "",
-            "highlight_text": ""
-        }
-
-    # print("filtered doc: ", filtered_doc)
-    highlight_text = filtered_doc[0].page_content                  # top 1 relevant chunk is highlight
+    highlight_text = filtered_doc[0].page_content if len(filtered_doc) > 0 else "" # top 1 relevant chunk is highlight
     context = "\n\n".join([doc.page_content for doc, _ in docs])   # adding \n\n to help LLM visually understand context better
 
     payload = {

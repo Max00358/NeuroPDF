@@ -92,7 +92,7 @@ const PdfUploader = (props) => {
                 Click or drag file to this area to upload
             </p>
             <p className="ant-upload-hint">
-                Support for a single or bulk upload. Strictly prohibited from uploading
+                Support for single upload. Strictly prohibited from uploading
                 company data or other banned files.
             </p>
         </Dragger>
