@@ -1,19 +1,24 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import ReactD3Tree from "react-d3-tree";
-import { CloseCircleOutlined } from "@ant-design/icons";
+import { CloseCircleOutlined, HomeOutlined, CameraOutlined } from "@ant-design/icons";
 import { Button, message } from "antd";
 import renderNode from "./RenderNode";
+import * as htmlToImage from 'html-to-image';
+import { saveAs } from 'file-saver';
 
 const TreeGraph = React.memo(({ data }) => {
     const { filePath, treeData, setTreeData, showTree, setShowTree } = data;
-
     const [ messageApi, contextHolder ] = message.useMessage();
 
     const hasFetchedRef = useRef(false);
-    const pollingRef = useRef(null);
+    const initialTranslateRef = useRef(null);
     const containerRef = useRef(null);
-    const [translate, setTranslate] = useState({x: 0, y: 0});
+    const pollingRef = useRef(null);
+
+    const [translate, setTranslate] = useState({ x: 0, y: 0 });
+    const [resetCounter, setResetCounter] = useState(0);
+    const [nodeCount, setNodeCount] = useState(1);
 
     const API_URL = 'http://127.0.0.1:7860';
 
@@ -28,7 +33,6 @@ const TreeGraph = React.memo(({ data }) => {
         backgroundColor: "rgba(194, 182, 182, 0.38)",
         backdropFilter: "blur(6px)",
 
-        border: "1px solid rgba(232, 232, 232, 0.47)",
         borderRadius: "8px",
         //padding: "20px",
         zIndex: 0,
@@ -36,10 +40,10 @@ const TreeGraph = React.memo(({ data }) => {
         overflow: "hidden"
     };
 
-    const treeCloseButtonStyle = {
+    const treeBaseButtonStyle={
         position: "absolute",
-        top: "8px",         // Distance from top
         right: "8px",       // Distance from right
+
         zIndex: treeContainerStyle.zIndex + 1,
         display: "flex",
         alignItems: "center",
@@ -53,18 +57,67 @@ const TreeGraph = React.memo(({ data }) => {
         
         ":hover": {
           backgroundColor: "rgba(255, 255, 255, 1)",
-          transform: "scale(1.1)"
         }
+    };
+    const treeCloseStyle = {
+        ...treeBaseButtonStyle,
+        top: "8px",
+    };
+    const treeHomeStyle={
+        ...treeBaseButtonStyle,
+        top: "48px",
+    };
+    const treeDownloadStyle={
+        ...treeBaseButtonStyle,
+        top: "88px",
     };
 
     const msgStyle = {
         margin: '70px 0 0 0',
     };
 
+    const countNodes = (node) => {
+        if (!node) return 0;
+        let count = 1; // count the current node
+        if (node.children && node.children.length > 0) {
+            for (let child of node.children) {
+                count += countNodes(child);
+            }
+        }
+        return count;
+    };
+    const home = () => {
+        if(initialTranslateRef.current){
+            setTranslate(initialTranslateRef.current);
+            setResetCounter(c => (c === 10)? 0 : c+1);
+        }
+    };
+    const download = async(filePath) => {
+        if (!containerRef.current) return;
+
+        setTimeout(async () => {
+            try {
+                const dataUrl = await htmlToImage.toPng(containerRef.current, {
+                    backgroundColor: 'transparent',
+                    filter: (node) => !node.classList?.contains("export-ignore"),
+                    pixelRatio: nodeCount/2
+                });
+                const blob = await (await fetch(dataUrl)).blob();
+
+                const fileName = filePath.replace(/^.*[\\\/]/, '')
+                saveAs(blob, `${fileName}-tree.png`);
+            } catch (err) {
+                console.error("PNG export failed: ", err);
+            }
+        }, 300);
+    };
+
     useEffect(() => {
         if(showTree && containerRef.current){
             const { width, height } = containerRef.current.getBoundingClientRect();
-            setTranslate({ x: width/2, y: height/5 });
+            const center = { x: width/2, y: height/5 };
+            setTranslate(center);
+            initialTranslateRef.current = center;
         }
     }, [showTree, treeData]);
 
@@ -107,6 +160,17 @@ const TreeGraph = React.memo(({ data }) => {
 
         return () => clearInterval(pollingRef.current);
     }, [filePath]);
+
+    // count total nodes ~ use nodeCount to adjust download resolution
+    useEffect(() => {
+        if (!treeData) return;
+      
+        // if treeData is an array of roots:
+        const total = Array.isArray(treeData)
+            ? treeData.reduce((sum, rootNode) => sum + countNodes(rootNode), 0) : countNodes(treeData);
+      
+        setNodeCount(total);
+    }, [treeData]);
 
     const key = 'treeLoading'; // used to identify & update existing msg
     useEffect(() => {
@@ -153,33 +217,56 @@ const TreeGraph = React.memo(({ data }) => {
         <>
             {contextHolder}
             {showTree &&
-                <div 
+                <div
                     style={treeContainerStyle}
                     ref={containerRef}
                 >
-                    <Button
-                        icon={<CloseCircleOutlined/>}
-                        size="large"
-                        type="link"
-                        onClick={() => setShowTree(false)}
-                        style={treeCloseButtonStyle}
-                    />
-                    
-                    <ReactD3Tree
-                        data={treeData}
-                        orientation="vertical"
-                        translate={translate}
-                        zoomable={true}
-                        collapsible={false}
-                        separation={{
-                            siblings: 1.7,
-                            nonSiblings: 2
-                        }}
-                        renderCustomNodeElement={renderNode}
-                        styles={{
-                            links: { stroke: '#a0a0a0', strokeWidth: 2, fill: '0' },
-                        }}
-                    />
+                    <div className='export-ignore'>   
+                        <Button
+                            icon={<CloseCircleOutlined/>}
+                            size="large"
+                            type="link"
+                            onClick={() => setShowTree(false)}
+                            style={treeCloseStyle}
+                        />
+                        <Button
+                            icon={<HomeOutlined/>}
+                            size="large"
+                            type="link"
+                            onClick={ home }
+                            style={treeHomeStyle}
+                        />
+                        <Button
+                            icon={<CameraOutlined/>}
+                            size="large"
+                            type="link"
+                            onClick={ () => download(filePath) }
+                            style={treeDownloadStyle}
+                        />
+                    </div> 
+
+                    <div 
+                        style={{ width: '100%', height: '100%', position: 'relative' }}
+                    >
+                        <ReactD3Tree
+                            // re-mount tree when key changes (when home button is clicked)
+                            key={`tree-${resetCounter}`}
+                            data={treeData}
+                            orientation="vertical"
+                            translate={translate}
+                            zoomable={true}
+                            scaleExtent={{min: 0.1, max: 3}}
+                            collapsible={false}
+                            separation={{
+                                siblings: 1.7,
+                                nonSiblings: 2
+                            }}
+                            renderCustomNodeElement={renderNode}
+                            styles={{
+                                links: { stroke: '#a0a0a0', strokeWidth: 2, fill: '0' },
+                            }}
+                        />
+                    </div>
                 </div>
             }
         </>
