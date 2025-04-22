@@ -6,7 +6,6 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import multer from "multer";
-import chat from "./chat.js";
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -68,33 +67,6 @@ const clearBeforeUpload = async(req, res, next) => {
 app.post("/upload", clearBeforeUpload, upload.single("file"), async(req, res) => {
     // sends json format key-value pair { filePath (key) : req.file.path (value) }
     res.json({ filePath : req.file.path });
-});
-
-// backend expects POST request
-app.post("/chat", express.json(), async(req, res)=>{    
-    // Handle question from URL parameter (from Postman)
-    // e.g. http://localhost:5001/chat?question='Does this student reveal his aura through his writing?'
-    const urlQuestion = req.query.question; // comes from Postman or Url requests
-    const bodyQuestion = req.body?.message; // comes from frontend POST requests with JSON body { message: "..." }
-    const finalQuestion = urlQuestion || bodyQuestion;
-
-    const filePath = req.body?.filePath;
-    
-    if (!finalQuestion) {
-        return res.status(400).send("Missing Question!");
-    }
-
-    try {
-        const { LLM_response, highlight_text } = await chat(filePath, finalQuestion);
-        console.log(`(server.js) finished waiting for chat response`);
-        return res.json({
-            LLM_response: LLM_response,      // LLM response used in ChatComponents
-            highlight_text: highlight_text
-        });
-    } catch (error) {
-        console.error("Chat Error:", error);
-        return res.status(500).send("Error processing the request");
-    }
 });
 
 app.listen(PORT, ()=>{

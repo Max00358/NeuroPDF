@@ -98,103 +98,102 @@ const treeOverlayStyle = {
 };
 
 const App = () => {
-  const [conversation, setConversation] = useState([]);
-  const [conversation_q, setConversationQ] = useState([]);
+  	const [conversation, setConversation] = useState([]);		// context & LLM_response
+  	const [conversation_q, setConversationQ] = useState([]);	// user questions
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [isUploaded, setIsUploaded] = useState(false);
-  const [showScrollButton, setShowScrollButton] = useState(false);
-  const [showTree, setShowTree] = useState(false);
+  	const [liveAnswer, setLiveAnswer] = useState("");
+	const [highlight, setHighlight] = useState("");
 
-  const [filePath, setFilePath] = useState(null);
-  const [treeData, setTreeData] = useState(null);
+	const [isLoading, setIsLoading] = useState(false);
+	const [isUploaded, setIsUploaded] = useState(false);
+	const [showScrollButton, setShowScrollButton] = useState(false);
+	const [showTree, setShowTree] = useState(false);
 
-  const { Header, Content } = Layout;
+	const [filePath, setFilePath] = useState(null);
+	const [treeData, setTreeData] = useState(null);
 
-  const handleResp = (answer, highlight_text) => {
-    // append new {Q, A} into conversation and setState to trigger re-render
-    // using append/push will NOT trigger re-render, which is why we don't use it here
-    setConversation([...conversation, { answer, highlight_text }]);
-  };
-  const scrollToBottom = () => {
-    const content = document.querySelector(".ant-layout-content");
-    content.scrollTo({
-      top: content.scrollHeight,
-      behavior: "smooth"
-    });
-  };
+	const { Header, Content } = Layout;
 
-  // runs when component mounts (load for the 1st time)
-  useEffect(() => {
-    const content = document.querySelector(".ant-layout-content");
-    const checkScroll = () => {
-      setShowScrollButton(
-        content.scrollHeight - content.scrollTop - content.clientHeight> 100
-      );
-    };
-    content.addEventListener("scroll", checkScroll);
-    return () => content.removeEventListener("scroll", checkScroll);
-  }, []);
+	const handleResp = (answer, highlight_text) => {
+		// append new {Q, A} into conversation and setState to trigger re-render
+		// using append/push will NOT trigger re-render, which is why we don't use it here
+		setConversation([...conversation, { answer, highlight_text }]);
+	};
+	const scrollToBottom = () => {
+		const content = document.querySelector(".ant-layout-content");
+		content.scrollTo({
+			top: content.scrollHeight,
+			behavior: "smooth"
+		});
+	};
 
-  return (
-	<>
-	<Layout style={layoutStyles}>
-		<Header 
-			style={headerStyles}
-		>
-		<div style={profileContainerStyles}>
-			<Avatar 
-				src={logo}
-				size="large"
-				style={logoStyles}
-				alt="NeuroPDF Logo"
-		/>
-			<div style={textContainerStyles}>
-				NeuroPDF
-				<RightOutlined />
-			</div>
-		</div>
-		</Header>
+	// runs when component mounts (load for the 1st time)
+	useEffect(() => {
+		const content = document.querySelector(".ant-layout-content");
+		const checkScroll = () => {
+			setShowScrollButton(
+				content.scrollHeight - content.scrollTop - content.clientHeight> 100
+			);
+		};
+		content.addEventListener("scroll", checkScroll);
+		return () => content.removeEventListener("scroll", checkScroll);
+	}, []);
 
-		<Content style={contentStyles}>
-		<div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 24px" }}>
-			{ isUploaded && (
-				<div style={treeOverlayStyle}>
-					<TreeGraph
-						data={{ filePath, treeData, setTreeData, showTree, setShowTree }}
-					/>
+  	return (
+		<>
+		<Layout style={layoutStyles}>
+			<Header 
+				style={headerStyles}
+			>
+			<div style={profileContainerStyles}>
+				<Avatar 
+					src={logo}
+					size="large"
+					style={logoStyles}
+					alt="NeuroPDF Logo"
+			/>
+				<div style={textContainerStyles}>
+					NeuroPDF
+					<RightOutlined />
 				</div>
-			)}
-			<RenderQA 
-				chatState={{ conversation, conversation_q, isLoading }}
-			/>
-		</div>
-		{
-			showScrollButton &&
-			<Button 
-				type="primary"
-				size="large"
-				icon={<DownCircleOutlined/>}
-				onClick={scrollToBottom}
-				style={downCircleStyle}
-			/>
-		}
-		</Content>
+			</div>
+			</Header>
 
-		<div style={chatComponentStyle}>
-			<ChatComponent
-				handleResp={handleResp}
-				setIsLoading={setIsLoading}
-				setConversationQ={setConversationQ}
-				filePath={filePath}
-				setFilePath={setFilePath}
-				setIsUploaded={setIsUploaded}
-				setTreeData={setTreeData}
-			/>
-		</div>
-	</Layout>
-	</>
-);
+			<Content style={contentStyles}>
+			<div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 24px" }}>
+				{ isUploaded && (
+					<div style={treeOverlayStyle}>
+						<TreeGraph
+							data={{ filePath, treeData, setTreeData, showTree, setShowTree }}
+						/>
+					</div>
+				)}
+				<RenderQA 
+					chatState={{ conversation, conversation_q, isLoading, liveAnswer, highlight}}
+				/>
+			</div>
+			{
+				showScrollButton &&
+				<Button 
+					type="primary"
+					size="large"
+					icon={<DownCircleOutlined/>}
+					onClick={scrollToBottom}
+					style={downCircleStyle}
+				/>
+			}
+			</Content>
+
+			<div style={chatComponentStyle}>
+				<ChatComponent
+					msgState={{ handleResp, setIsLoading, setConversationQ, setLiveAnswer, highlight, setHighlight }}
+					fileState={{ filePath, setFilePath, setIsUploaded}}
+					treeState={{ setTreeData }}
+				/>
+			</div>
+		</Layout>
+		</>
+	);
 };
 
 export default App;

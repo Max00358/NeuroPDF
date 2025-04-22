@@ -65,7 +65,7 @@ const copyStyle = {
 }
 
 const RenderQA = ({ chatState }) => {
-    const { conversation, conversation_q, isLoading } = chatState;
+    const { conversation, conversation_q, isLoading, liveAnswer, highlight } = chatState;
     const [ messageApi, contextHolder ] = message.useMessage();
 
     const formatHighlight = (highlight) => {
@@ -95,7 +95,11 @@ const RenderQA = ({ chatState }) => {
 
     return (
         <>  
-            {conversation_q?.map((question, index) => 
+        {conversation_q?.map((question, index) => {
+            const isCurrent = index === conversation_q.length-1;
+            const showLive = isCurrent && liveAnswer;
+
+            return (
                 <div 
                     key={`q-${index}`}
                     style={containerStyle}
@@ -106,30 +110,43 @@ const RenderQA = ({ chatState }) => {
                         </div>
                     </div>
 
-                    {/* Display LLM answer if it exists */}
-                    {conversation[index] && (
-                        <div style={agentContainer}>
-                            <div style={agentStyle}>
-                                {
-                                    conversation[index].highlight_text?.length > 0 &&
-                                    <Card
-                                        title="Relevant Context"
-                                        hoverable={true}
-                                        onClick={() => copyToClipboard(formatHighlight(conversation[index].highlight_text), "context")}
-                                        style={highlightStyle}
-                                    >
-                                        "
-                                        {
-                                            formatHighlight(conversation[index].highlight_text)
-                                        }
-                                        "
-                                    </Card>
-                                }
-                                {
-                                    conversation[index].answer
-                                }
+                    {
+                        showLive ? (
+                            // Display current live answer & highlight
+                            <div style={agentContainer}>
+                                <div style={agentStyle}>
+                                    { 
+                                        highlight?.length > 0 && (
+                                        <Card 
+                                            title="Relevant Context" 
+                                            hoverable={true}
+                                            style={highlightStyle}>
+                                            "{formatHighlight(highlight)}"
+                                        </Card>
+                                    )}
+                                    { liveAnswer }
+                                </div>
                             </div>
-                        </div>
+                        ):(
+                            // Display LLM answer if it exists
+                            conversation[index] && (
+                            <div style={agentContainer}>
+                                <div style={agentStyle}>
+                                    {
+                                        conversation[index].highlight_text?.length > 0 &&
+                                        <Card
+                                            title="Relevant Context"
+                                            hoverable={true}
+                                            onClick={() => copyToClipboard(formatHighlight(conversation[index].highlight_text), "context")}
+                                            style={highlightStyle}
+                                        >
+                                            "{ formatHighlight(conversation[index].highlight_text) }"
+                                        </Card>
+                                    }
+                                    { conversation[index].answer }
+                                </div>
+                            </div>
+                        )
                     )}
 
                     {/* Copy Button under LLM response */}
@@ -149,7 +166,7 @@ const RenderQA = ({ chatState }) => {
                     </div>
 
                     {/* Show loading indicator for current question */}
-                    {isLoading && index === conversation_q.length - 1 && (
+                    {isLoading && index === conversation_q.length - 1 && !liveAnswer && (
                         <div style={containerStyle}>
                             <div style={loadingStyle}>
                                 <Spin 
@@ -160,7 +177,8 @@ const RenderQA = ({ chatState }) => {
                         </div>
                     )}
                 </div>
-            )}
+            )
+        })}
         </>
     );
 };

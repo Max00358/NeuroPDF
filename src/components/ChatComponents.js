@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from "react";
 import PdfUploader from './PdfUploader';
 import { Button, Input, Popover } from "antd";
-import { AudioOutlined, PlayCircleOutlined, PauseCircleOutlined, PlusCircleOutlined, LoadingOutlined } from "@ant-design/icons";
+import { AudioOutlined, PlayCircleOutlined, PauseCircleOutlined, PlusCircleOutlined } from "@ant-design/icons";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 import Speech from "speak-tts";
-import axios from "axios";
-
-const { Search } = Input
-const DOMAIN = process.env.REACT_APP_DOMAIN;
+import chat from "../chat";
 
 const searchContainer = {
     display: "flex",
@@ -15,8 +12,11 @@ const searchContainer = {
     alignItems: "flex-end" // sticks buttons to the end ("bottom" option doesn't exist)
 };
 
-const ChatComponent = (props) => {
-    const { handleResp, setIsLoading, setConversationQ, filePath, setFilePath, setIsUploaded, setTreeData } = props;
+const ChatComponent = ({ msgState, fileState, treeState }) => {
+    const { handleResp, setIsLoading, setConversationQ, setLiveAnswer, highlight, setHighlight } = msgState;
+	const { filePath, setFilePath, setIsUploaded } = fileState;
+	const { setTreeData } = treeState;
+
     // searchValue is user's input text, we dig them out from Search->onSearch
     const [searchValue, setSearchValue] = useState("")
     const [speech, setSpeech] = useState();
@@ -68,6 +68,40 @@ const ChatComponent = (props) => {
         }
     }, [listening, transcript]);
 
+    const startChat = (filePath, UserQuestion) => {
+        setLiveAnswer("");
+        setHighlight("");
+
+        let finalAns = "";
+        let finalHighlight = "";
+        chat(
+            filePath,
+            UserQuestion,
+            (highlight_text) => {
+                finalHighlight = highlight_text;
+                setHighlight(highlight_text);
+            },
+            (chunk) => {                              // onLLMChunk
+                finalAns += chunk;
+                setLiveAnswer(prev => prev + chunk);
+            },
+            () => {                                   // onDone
+                handleResp(finalAns, finalHighlight);
+                setIsLoading(false);                  // setIsLoading duration: immediately after Q's sent && before liveAnswer appears
+                setLiveAnswer("");
+                setHighlight("");
+
+                if (speech && isChatModeOn) {
+                    talk(finalAns, isPaused);
+                }
+            }, 
+            (err) => {                                // onError
+                setLiveAnswer(`(ChatComponents.js) Error: ${err.message || "Streaming error"}`);
+                setIsLoading(false);
+            }
+        );
+    };
+
     const talk = (what2say) => {
         speech.speak({
             text: what2say,
@@ -118,6 +152,7 @@ const ChatComponent = (props) => {
         setSearchValue(e.target.value);
     };
     const onSearch = async(question)=>{
+        setIsLoading(true);
         setConversationQ(prev => [...prev, question]);
         setSearchValue(""); // clear text box after msg sent
         
@@ -126,30 +161,7 @@ const ChatComponent = (props) => {
             setIsLoading(false);
             return;
         }
-
-        setIsLoading(true);
-        try{
-            const response = await axios.post(`${DOMAIN}/chat`, {
-                message: question,
-                filePath    // filePath to PDF
-            });
-            const answer = response.data?.LLM_response || "No Response Data :(";
-            const highlight_text = response.data?.highlight_text;
-            handleResp(answer, highlight_text);
-            
-            if(speech && isChatModeOn){
-                talk(answer, isPaused);
-            }
-        }
-        catch(error){
-            console.error(`Error: ${error}`);
-            // '?' is nullish-safety check, '?.' is optional chaining
-            const safeMsg = error?.response?.data || error.message || "ChatComponents->onSearch Error";
-            handleResp(safeMsg.toString(), "");
-        }
-        finally{
-            setIsLoading(false);
-        }
+        startChat(filePath, question);
     };
 
     return (

@@ -56,7 +56,7 @@ const TreeGraph = React.memo(({ data }) => {
         boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
         
         ":hover": {
-          backgroundColor: "rgba(255, 255, 255, 1)",
+            backgroundColor: "rgba(255, 255, 255, 1)",
         }
     };
     const treeCloseStyle = {
@@ -100,7 +100,7 @@ const TreeGraph = React.memo(({ data }) => {
                 const dataUrl = await htmlToImage.toPng(containerRef.current, {
                     backgroundColor: 'transparent',
                     filter: (node) => !node.classList?.contains("export-ignore"),
-                    pixelRatio: nodeCount/2
+                    pixelRatio: Math.max(2, nodeCount/2) // min resolution being 2
                 });
                 const blob = await (await fetch(dataUrl)).blob();
 
@@ -252,14 +252,14 @@ const TreeGraph = React.memo(({ data }) => {
                             // re-mount tree when key changes (when home button is clicked)
                             key={`tree-${resetCounter}`}
                             data={treeData}
+                            pathFunc="" // elbow, straight, step
                             orientation="vertical"
                             translate={translate}
                             zoomable={true}
-                            scaleExtent={{min: 0.1, max: 3}}
                             collapsible={false}
                             separation={{
-                                siblings: 1.7,
-                                nonSiblings: 2
+                                siblings: 1.5,
+                                nonSiblings: 1.7
                             }}
                             renderCustomNodeElement={renderNode}
                             styles={{

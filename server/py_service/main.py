@@ -13,6 +13,8 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS      # lightweight vector search engine
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import BackgroundTasks
+from fastapi.responses import StreamingResponse
+from fastapi import Request
 from dotenv import load_dotenv
 import dirtyjson
 import json, httpx, os, re
@@ -45,13 +47,9 @@ app.add_middleware(
 #     allow_headers=["Content-Type"]
 # )
 
-# schema
+# schema for POST
 class MakeTreeRequest(BaseModel):
-    filePath: str
-    
-class ContextRequest(BaseModel):
-    filePath: str
-    question: str    
+    filePath: str  
 
 # filePath: PDF upload path
 # treePath: tree json save path
@@ -184,23 +182,23 @@ async def get_tree(req: MakeTreeRequest, background_tasks: BackgroundTasks):
 # chat endpoint (RAG)
 vs_map: dict[str, FAISS] = {} # store vectorstores
 
-@app.post("/chat")
-async def get_context(req: ContextRequest): # incoming req should be parsed & validated into "ContextRequest" instance    
-    question = req.question
-    
+# streaming via SSE requires GET, POST is used to get full response at once
+    # request: Request is used to detect if client has closed connection
+@app.get("/chat-stream")
+async def get_context(request: Request, filePath: str, question: str): # incoming req should be parsed & validated into "ContextRequest" instance        
     # if upload path not in memory, build it
     vectorstore = None
-    if req.filePath not in vs_map:
-        loader = PyMuPDFLoader(os.path.join("..", req.filePath))
+    if filePath not in vs_map:
+        loader = PyMuPDFLoader(os.path.join("..", filePath))
         docs = loader.load() # contains array of pageContent & metadata
 
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
         split_docs = text_splitter.split_documents(docs)
 
         vectorstore = FAISS.from_documents(split_docs, embedding_model)
-        vs_map[req.filePath] = vectorstore
+        vs_map[filePath] = vectorstore
     else:
-        vectorstore = vs_map[req.filePath]
+        vectorstore = vs_map[filePath]
     
     # find top 3 relevant chunks
     # docs = [(Document(...), score), (Document(...), score), ...]
@@ -233,23 +231,36 @@ async def get_context(req: ContextRequest): # incoming req should be parsed & va
                 "content": f"{context}\n\nQuestion:{question}"
             }
         ],
-        "stream": False
+        "stream": True
     }
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
+
+    async def event_generator():
+        yield f"data: { json.dumps({'highlight_text': highlight_text}) }\n\n"
+
+        async with httpx.AsyncClient(timeout=60) as client:
+            async with client.stream(
+                "POST",
                 "https://api.deepseek.com/chat/completions",
                 json=payload,
                 headers={"Authorization": f"Bearer {API_KEY}"},
-                timeout=60  # 60 seconds (in py, timeout has unit of seconds; in JS, timeout has unit of ms)
-            )
-        answer = response.json()["choices"][0]["message"]["content"]
-
-        return {
-            "LLM_response": answer,
-            "highlight_text": highlight_text
-        }
+            ) as response:
+                async for line in response.aiter_lines():
+                    if await request.is_disconnected():
+                        print("(main.py) client has closed connection...")
+                        break
+                    if line.strip().startswith("data: "):
+                        json_data = line.removeprefix("data: ").strip()
+                        if json_data == "[DONE]":
+                            # yield lets program return value multiple times, not just once like return
+                            yield "data: [DONE]\n\n"
+                            break
+                        try:
+                            chunk = json.loads(json_data)
+                            # grabs content if exist, empty string if not to prevent errors
+                            delta = chunk["choices"][0]["delta"].get("content", "")
+                            if delta:
+                                yield f"data: {json.dumps({ 'LLM_response': delta })}\n\n"
+                        except Exception as e:
+                            yield f"data: {json.dumps({ 'error': str(e) })}\n\n"
     
-    except Exception as error:
-        return { "error": str(error) }
-    
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
