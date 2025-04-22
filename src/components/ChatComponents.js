@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PdfUploader from './PdfUploader';
 import { Button, Input, Popover } from "antd";
 import { AudioOutlined, PlayCircleOutlined, PauseCircleOutlined, PlusCircleOutlined } from "@ant-design/icons";
@@ -68,34 +68,73 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
         }
     }, [listening, transcript]);
 
+    // creating typing output effect
+    const typingSpeed = 20;             // ms per char
+    const bufferRef = useRef("");       // perserve 1 chunk of data
+    const typeOut = () => {
+        if(bufferRef.current.length === 0) {
+            isTypingRef.current = false;
+            return;
+        }
+
+        const firstChar = bufferRef.current[0];
+        bufferRef.current = bufferRef.current.slice(1); // slice off 0th char
+
+        setLiveAnswer(prev => prev + firstChar);
+        setTimeout(typeOut, typingSpeed);
+    };
+
+    const finalAnsRef = useRef("");
+    const finalHighlightRef = useRef("");
+    const isTypingRef = useRef(false);
     const startChat = (filePath, UserQuestion) => {
+        // reset buffer
+        finalAnsRef.current = "";
+        finalHighlightRef.current = "";
+        bufferRef.current = "";
+
         setLiveAnswer("");
         setHighlight("");
-
-        let finalAns = "";
-        let finalHighlight = "";
+        
         chat(
             filePath,
             UserQuestion,
             (highlight_text) => {
-                finalHighlight = highlight_text;
+                finalHighlightRef.current = highlight_text;
                 setHighlight(highlight_text);
             },
-            (chunk) => {                              // onLLMChunk
-                finalAns += chunk;
-                setLiveAnswer(prev => prev + chunk);
-            },
-            () => {                                   // onDone
-                handleResp(finalAns, finalHighlight);
-                setIsLoading(false);                  // setIsLoading duration: immediately after Q's sent && before liveAnswer appears
-                setLiveAnswer("");
-                setHighlight("");
+            (chunk) => { // onLLMChunk
+                if(!chunk) return;
 
-                if (speech && isChatModeOn) {
-                    talk(finalAns, isPaused);
+                finalAnsRef.current += chunk;
+                bufferRef.current += chunk;
+
+                if(!isTypingRef.current){
+                    isTypingRef.current = true;
+                    typeOut();
                 }
+            },
+            () => { // onDone
+                // when we receive "[DONE]", program can still be typing
+                // but if we were to clear liveAnswer immediately, 
+                // our display will be cutoff, and then new chunks are still coming in...
+                const waitTypingDone = setInterval(() => {
+                    if(!isTypingRef.current && bufferRef.current.length === 0){
+                        clearInterval(waitTypingDone);
+
+                        handleResp(finalAnsRef.current, finalHighlightRef.current);
+                        // setIsLoading duration: immediately after Q's sent && before liveAnswer appears
+                        setIsLoading(false);
+                        setLiveAnswer("");
+                        setHighlight("");
+
+                        if (speech && isChatModeOn) {
+                            talk(finalAnsRef.current, isPaused);
+                        }
+                    }
+                }, 50);
             }, 
-            (err) => {                                // onError
+            (err) => { // onError
                 setLiveAnswer(`(ChatComponents.js) Error: ${err.message || "Streaming error"}`);
                 setIsLoading(false);
             }

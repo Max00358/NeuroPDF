@@ -1,7 +1,8 @@
 // to display Questions & Answers (RenderQA)
-import React from "react";
-import { Spin, Card, Button, message } from "antd";
+import React, { useEffect, useRef }from "react";
+import { Card, Button, message } from "antd";
 import { CopyOutlined } from "@ant-design/icons";
+import "./RenderQA.css";
 
 const containerStyle = {
     display: "flex",
@@ -55,10 +56,11 @@ const loadingStyle = {
     maxWidth: "50%",
     backgroundColor: "#E5E5EA",          // iMessage light gray
     borderRadius: "18px 18px 18px 4px",  // iMessage-style bubble
-    padding: "16px",                     // Adequate space for spinner
+    padding: "0 0 16px 0",               // Adequate space for spinner
     display: "inline-flex",              // For proper bubble sizing
     justifyContent: "center",
-    alignItems: "center"
+
+    fontSize: "48px", 
 };
 const copyStyle = {
     backgroundColor: ""
@@ -67,6 +69,12 @@ const copyStyle = {
 const RenderQA = ({ chatState }) => {
     const { conversation, conversation_q, isLoading, liveAnswer, highlight } = chatState;
     const [ messageApi, contextHolder ] = message.useMessage();
+    const scrollRef = useRef(null);
+
+    // auto-scroll to bottom
+    useEffect(() => {
+        scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [conversation, conversation_q, liveAnswer]);
 
     const formatHighlight = (highlight) => {
         const raw = Array.isArray(highlight) ? highlight.join(" ") : String(highlight || "");
@@ -84,7 +92,7 @@ const RenderQA = ({ chatState }) => {
                         key: 'updatable',
                         type: 'success',
                         content: (type === "context")? 'Context Copied!' : 'Answer Copied!',
-                        duration: 2,
+                        duration: 0.8,
                     });
                 });
             })
@@ -102,6 +110,7 @@ const RenderQA = ({ chatState }) => {
             return (
                 <div 
                     key={`q-${index}`}
+                    ref={scrollRef}
                     style={containerStyle}
                 >
                     <div style={userContainer}>
@@ -114,7 +123,9 @@ const RenderQA = ({ chatState }) => {
                         showLive ? (
                             // Display current live answer & highlight
                             <div style={agentContainer}>
-                                <div style={agentStyle}>
+                                <div 
+                                    style={agentStyle}
+                                >
                                     { 
                                         highlight?.length > 0 && (
                                         <Card 
@@ -131,7 +142,10 @@ const RenderQA = ({ chatState }) => {
                             // Display LLM answer if it exists
                             conversation[index] && (
                             <div style={agentContainer}>
-                                <div style={agentStyle}>
+                                <div 
+                                    className="fade-in"
+                                    style={agentStyle}
+                                >
                                     {
                                         conversation[index].highlight_text?.length > 0 &&
                                         <Card
@@ -151,8 +165,7 @@ const RenderQA = ({ chatState }) => {
 
                     {/* Copy Button under LLM response */}
                     <div>  
-                        {
-                        !isLoading &&
+                        {!isLoading &&
                         <>
                             {/* contextHolder makes sure msg gets displayed after click */}
                             {contextHolder} 
@@ -169,10 +182,9 @@ const RenderQA = ({ chatState }) => {
                     {isLoading && index === conversation_q.length - 1 && !liveAnswer && (
                         <div style={containerStyle}>
                             <div style={loadingStyle}>
-                                <Spin 
-                                    size="large"
-                                    percent="auto"
-                                />
+                                <span className="dot-animation">
+                                    .
+                                </span>
                             </div>
                         </div>
                     )}
