@@ -6,6 +6,26 @@ import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognitio
 import Speech from "speak-tts";
 import chat from "../chat";
 
+// static style obj stays outside component to avoid re-render/re-calculation
+const chatBoxContainer = {
+    width: "100%",
+    height: "100%",
+    border: "1px solid rgba(217, 217, 217, 0.7)",
+    borderRadius: "8px",
+    padding: "8px 12px",
+
+    display: "flex", 
+    flexDirection: "column", 
+    gap: "12px"
+};
+const buttonRow = {
+    display: "flex",
+    justifyContent: "space-between", // or "flex-start" with `gap`
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: "8px",
+};
+
 const ChatComponent = ({ msgState, fileState, treeState }) => {
     const { handleResp, isLoading, setIsLoading, setConversationQ, setLiveAnswer, highlight, setHighlight } = msgState;
 	const { filePath, setFilePath, setIsUploaded } = fileState;
@@ -26,31 +46,13 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
 
     const [ messageApi, contextHolder ] = message.useMessage();
 
-    const chatBoxContainer = {
-        width: "100%",
-        height: "100%",
-        border: "1px solid rgba(217, 217, 217, 0.7)",
-        borderRadius: "8px",
-        padding: "8px 12px",
-    
-        display: "flex", 
-        flexDirection: "column", 
-        gap: "12px"
-    };
-    const buttonRow = {
-        display: "flex",
-        justifyContent: "space-between", // or "flex-start" with `gap`
-        alignItems: "center",
-        flexWrap: "wrap",
-        gap: "8px",
-    };
     const downCircleStyle = {
-		position: "fixed",
-		bottom: `${chatHeight + 55}px`,
-		left: "50%",
-		transform: "translateX(-50%)",
-		opacity: 0.8,
-	};
+        position: "fixed",
+        bottom: `${chatHeight + 55}px`,
+        left: "50%",
+        transform: "translateX(-50%)",
+        opacity: 0.8,
+    };
 
     const {
         transcript,
@@ -187,7 +189,7 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
                         
                         if(!pauseRef.current)
                             handleResp(finalAnsRef.current, finalHighlightRef.current);
-                        
+
                         // setIsLoading duration: immediately after Q's sent && before liveAnswer appears
                         setIsLoading(false);
                         setLiveAnswer("");

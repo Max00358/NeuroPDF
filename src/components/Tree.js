@@ -7,6 +7,60 @@ import renderNode from "./RenderNode";
 import * as htmlToImage from 'html-to-image';
 import { saveAs } from 'file-saver';
 
+const treeContainerStyle = { 
+    position: "relative",
+    boxSizing: "border-box",
+    top: "10px",
+    left: "0px",
+    right: "0px",
+    height: "71vh",
+
+    backgroundColor: "rgba(194, 182, 182, 0.38)",
+    backdropFilter: "blur(6px)",
+
+    borderRadius: "8px",
+    //padding: "20px",
+    zIndex: 0,
+
+    overflow: "hidden"
+};
+
+const treeBaseButtonStyle={
+    position: "absolute",
+    right: "8px",       // Distance from right
+
+    zIndex: treeContainerStyle.zIndex + 1,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "32px",      // Fixed size for better click target
+    height: "32px",
+    
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    borderRadius: "50%",
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
+    
+    ":hover": {
+        backgroundColor: "rgba(255, 255, 255, 1)",
+    }
+};
+const treeCloseStyle = {
+    ...treeBaseButtonStyle,
+    top: "8px",
+};
+const treeHomeStyle={
+    ...treeBaseButtonStyle,
+    top: "48px",
+};
+const treeDownloadStyle={
+    ...treeBaseButtonStyle,
+    top: "88px",
+};
+
+const msgStyle = {
+    margin: '70px 0 0 0',
+};
+
 const TreeGraph = React.memo(({ data }) => {
     const { filePath, treeData, setTreeData, showTree, setShowTree } = data;
     const [ messageApi, contextHolder ] = message.useMessage();
@@ -21,60 +75,6 @@ const TreeGraph = React.memo(({ data }) => {
     const [nodeCount, setNodeCount] = useState(1);
 
     const API_URL = 'http://127.0.0.1:7860';
-
-    const treeContainerStyle = { 
-        position: "relative",
-        boxSizing: "border-box",
-        top: "10px",
-        left: "0px",
-        right: "0px",
-        height: "71vh",
-
-        backgroundColor: "rgba(194, 182, 182, 0.38)",
-        backdropFilter: "blur(6px)",
-
-        borderRadius: "8px",
-        //padding: "20px",
-        zIndex: 0,
-
-        overflow: "hidden"
-    };
-
-    const treeBaseButtonStyle={
-        position: "absolute",
-        right: "8px",       // Distance from right
-
-        zIndex: treeContainerStyle.zIndex + 1,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: "32px",      // Fixed size for better click target
-        height: "32px",
-        
-        backgroundColor: "rgba(255, 255, 255, 0.8)",
-        borderRadius: "50%",
-        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
-        
-        ":hover": {
-            backgroundColor: "rgba(255, 255, 255, 1)",
-        }
-    };
-    const treeCloseStyle = {
-        ...treeBaseButtonStyle,
-        top: "8px",
-    };
-    const treeHomeStyle={
-        ...treeBaseButtonStyle,
-        top: "48px",
-    };
-    const treeDownloadStyle={
-        ...treeBaseButtonStyle,
-        top: "88px",
-    };
-
-    const msgStyle = {
-        margin: '70px 0 0 0',
-    };
 
     const countNodes = (node) => {
         if (!node) return 0;

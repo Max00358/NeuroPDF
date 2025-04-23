@@ -8,7 +8,6 @@ const containerStyle = {
     display: "flex",
     justifyContent: "space-between",
     flexDirection: "column",
-    marginBottom: "20px"
 };
 const userContainer = {
     textAlign: "right"
@@ -20,14 +19,15 @@ const userStyle = {
     color: "white",
     display: "inline-block",
     padding: "10px",
-    marginBottom: "5%",
+    marginBottom: "40px",
     borderRadius: "18px 18px 0px 18px"
 };
 
 const agentContainer = {
-    textAlign: "left" // left of the entire window
+    textAlign: "left", // left of the entire window
 };
 const agentStyle = {
+    position: "relative",
     maxWidth: "50%",
     fontSize: 14,
     lineHeight: 1.3,
@@ -35,9 +35,9 @@ const agentStyle = {
     backgroundColor: "#E5E5EA", // iMessage light grey
     color: "black",
     display: "inline-block",
-    padding: "10px",
-    marginBottom: "1%",
-    borderRadius: "18px 18px 18px 0px"
+    padding: "15px",
+    marginBottom: `40px`,
+    borderRadius: "18px 18px 18px 0px",
 };
 
 const highlightStyle = {
@@ -65,7 +65,9 @@ const loadingStyle = {
     fontSize: "48px", 
 };
 const copyStyle = {
-    backgroundColor: ""
+    position: "absolute",
+    bottom: "0px",
+    right: "-40px",
 }
 
 const RenderQA = ({ chatState }) => {
@@ -88,7 +90,6 @@ const RenderQA = ({ chatState }) => {
     const copyToClipboard = (text, type) => {
         navigator.clipboard.writeText(text)
             .then(() => {
-                // makes "Copied!" msg disappear after 1.5 seconds
                 setTimeout(() => {
                     messageApi.open({
                         key: 'updatable',
@@ -104,95 +105,94 @@ const RenderQA = ({ chatState }) => {
     }
 
     return (
-        <>  
-        {conversation_q?.map((question, index) => {
-            const isCurrent = index === conversation_q.length-1;
-            const showLive = isCurrent && liveAnswer;
+        <>
+            {conversation_q?.map((question, index) => {
+                const isCurrent = index === conversation_q.length-1;
+                const showLive = isCurrent && liveAnswer;
 
-            return (
-                <div 
-                    key={`q-${index}`}
-                    ref={scrollRef}
-                    style={containerStyle}
-                >
-                    <div style={userContainer}>
-                        <div style={userStyle}>
-                            {question}
-                        </div>
-                    </div>
-
-                    {
-                        showLive ? (
-                            // Display current live answer & highlight
-                            <div style={agentContainer}>
-                                <div 
-                                    style={agentStyle}
-                                >
-                                    { 
-                                        highlight?.length > 0 && (
-                                        <Card 
-                                            title="Relevant Context" 
-                                            hoverable={true}
-                                            style={highlightStyle}>
-                                            "{formatHighlight(highlight)}"
-                                        </Card>
-                                    )}
-                                    { liveAnswer }
-                                </div>
-                            </div>
-                        ):(
-                            // Display LLM answer if it exists
-                            conversation[index] && (
-                            <div style={agentContainer}>
-                                <div 
-                                    className="fade-in"
-                                    style={agentStyle}
-                                >
-                                    {
-                                        conversation[index].highlight_text?.length > 0 &&
-                                        <Card
-                                            title="Relevant Context"
-                                            hoverable={true}
-                                            onClick={() => copyToClipboard(formatHighlight(conversation[index].highlight_text), "context")}
-                                            style={highlightStyle}
-                                        >
-                                            "{ formatHighlight(conversation[index].highlight_text) }"
-                                        </Card>
-                                    }
-                                    { conversation[index].answer }
-                                </div>
-                            </div>
-                        )
-                    )}
-
-                    {/* Copy Button under LLM response */}
-                    <div>  
-                        {!isLoading &&
-                        <>
-                            {/* contextHolder makes sure msg gets displayed after click */}
-                            {contextHolder} 
-                            <Button
-                                icon={<CopyOutlined/>}
-                                style={copyStyle}
-                                onClick={() => copyToClipboard(conversation[index].answer, "answer")}
-                            />
-                        </>
-                        }
-                    </div>
-
-                    {/* Show loading indicator for current question */}
-                    {isLoading && index === conversation_q.length - 1 && !liveAnswer && (
-                        <div style={containerStyle}>
-                            <div style={loadingStyle}>
-                                <span className="dot-animation">
-                                    .
-                                </span>
+                return (
+                    <div 
+                        key={`q-${index}`}
+                        style={containerStyle}
+                        ref={scrollRef}
+                    >
+                        <div style={userContainer}>
+                            <div style={userStyle}>
+                                {question}
                             </div>
                         </div>
-                    )}
-                </div>
-            )
-        })}
+
+                        {
+                            showLive ? (
+                                // Display current live answer & highlight
+                                <div style={agentContainer}>
+                                    <div 
+                                        style={agentStyle}
+                                    >
+                                        { 
+                                            highlight?.length > 0 && (
+                                            <Card 
+                                                title="Relevant Context" 
+                                                hoverable={true}
+                                                style={highlightStyle}>
+                                                "{formatHighlight(highlight)}"
+                                            </Card>
+                                        )}
+                                        { liveAnswer }
+                                    </div>
+                                </div>
+                            ):(
+                                // Display LLM answer if it exists
+                                conversation[index] && (
+                                <div 
+                                    style={agentContainer}
+                                >
+                                    <div 
+                                        className="fade-in"
+                                        style={agentStyle}
+                                    >
+                                        {
+                                            conversation[index].highlight_text?.length > 0 &&
+                                            <Card
+                                                title="Relevant Context"
+                                                hoverable={true}
+                                                onClick={() => copyToClipboard(formatHighlight(conversation[index].highlight_text), "context")}
+                                                style={highlightStyle}
+                                            >
+                                                "{ formatHighlight(conversation[index].highlight_text) }"
+                                            </Card>
+                                        }
+                                        { conversation[index].answer }
+
+                                        {/* Copy Button under LLM response */}
+                                        {!isLoading &&
+                                        <>
+                                            {contextHolder} 
+                                            <Button
+                                                icon={<CopyOutlined/>}
+                                                style={copyStyle}
+                                                onClick={() => copyToClipboard(conversation[index].answer, "answer")}
+                                            />
+                                        </>
+                                        }
+                                    </div>
+                                </div>
+                            )
+                        )}
+
+                        {/* Show loading indicator for current question */}
+                        {isLoading && index === conversation_q.length - 1 && !liveAnswer && (
+                            <div style={containerStyle}>
+                                <div style={loadingStyle}>
+                                    <span className="dot-animation">
+                                        .
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )
+            })}
         </>
     );
 };
