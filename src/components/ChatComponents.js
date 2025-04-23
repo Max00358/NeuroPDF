@@ -35,8 +35,8 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
     const [searchValue, setSearchValue] = useState("")
     const [speech, setSpeech] = useState();
 
-    const [isChatModeOn, setIsChatModeOn] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
+    const [isSpeaking, setIsSpeaking] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
 
     const [showScrollButton, setShowScrollButton] = useState(false);
@@ -195,7 +195,7 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
                         setLiveAnswer("");
                         setHighlight("");
 
-                        if (speech && isChatModeOn) {
+                        if (speech && isRecording) {
                             talk(finalAnsRef.current, isPaused);
                         }
                     }
@@ -230,10 +230,12 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
             queue: false, 
             listeners: {
                 onstart: () => {
+                    setIsSpeaking(true);
                     console.log("start utterance");
                 },
                 onend: () => {
                     console.log("end utterance");
+                    setIsSpeaking(false);
                 },
                 onboundary: (event) => {
                     console.log(`${event.name} boundary reached after ${event.elapsedTime} milliseconds`);
@@ -241,15 +243,9 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
             }
         });
     };
-    // const chatModeClickHandler = () => {
-    //     setIsChatModeOn(!isChatModeOn);
-    //     setIsRecording(false);
-    //     SpeechRecognition.stopListening();
-    // };
     const recordingClickHandler = () => {
-        setIsChatModeOn(!isChatModeOn);
-
-        if(isChatModeOn && isRecording){
+        setIsRecording(!isRecording);
+        if(isRecording){
             setIsRecording(false);
             SpeechRecognition.stopListening();
         } else {
@@ -275,7 +271,7 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
         if(isLoading){
             messageApi.warning("Hold on! A response is still generating...", 1);
         }
-        else if(isChatModeOn){
+        else if(isRecording){
             messageApi.warning("Turn off chat mode to send text", 1);
         }
         // when enter is pressed but shift is NOT pressed, send LLM the user question
@@ -378,9 +374,9 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
                         type="primary"
                         size="middle"
                         shape="circle"
-                        icon={isPaused && isRecording? <PauseCircleOutlined /> : <PlayCircleOutlined />}
-                        disabled={!isChatModeOn}
-                        danger={isPaused && isRecording}
+                        icon={isSpeaking && isPaused ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+                        disabled={!isSpeaking}
+                        danger={isSpeaking && isPaused}
                         onClick={pausingClickHandler}
                     />
                     <Button
@@ -388,7 +384,7 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
                         size="middle"
                         shape="circle"
                         icon={<AudioOutlined />}
-                        danger={isChatModeOn}
+                        danger={isRecording}
                         onClick={recordingClickHandler}
                     />
 
@@ -407,7 +403,7 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
                             type="primary"
                             size="middle"
                             shape="circle"
-                            disabled={isChatModeOn}
+                            disabled={isRecording}
                             icon={<ArrowUpOutlined />}
                             onClick={pressEnterHandler}
                         />)
