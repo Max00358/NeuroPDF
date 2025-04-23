@@ -28,7 +28,7 @@ const TreeGraph = React.memo(({ data }) => {
         top: "10px",
         left: "0px",
         right: "0px",
-        height: "76vh",
+        height: "71vh",
 
         backgroundColor: "rgba(194, 182, 182, 0.38)",
         backdropFilter: "blur(6px)",

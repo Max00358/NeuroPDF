@@ -1,19 +1,13 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import PdfUploader from './PdfUploader';
-import { Button, Input, Popover } from "antd";
-import { AudioOutlined, PlayCircleOutlined, PauseCircleOutlined, PlusCircleOutlined } from "@ant-design/icons";
+import { Button, Input, Popover, message } from "antd";
+import { AudioOutlined, PlayCircleOutlined, PauseCircleOutlined, PlusCircleOutlined, BorderOutlined, ArrowUpOutlined, DownCircleOutlined } from "@ant-design/icons";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 import Speech from "speak-tts";
 import chat from "../chat";
 
-const searchContainer = {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "flex-end" // sticks buttons to the end ("bottom" option doesn't exist)
-};
-
 const ChatComponent = ({ msgState, fileState, treeState }) => {
-    const { handleResp, setIsLoading, setConversationQ, setLiveAnswer, highlight, setHighlight } = msgState;
+    const { handleResp, isLoading, setIsLoading, setConversationQ, setLiveAnswer, highlight, setHighlight } = msgState;
 	const { filePath, setFilePath, setIsUploaded } = fileState;
 	const { setTreeData } = treeState;
 
@@ -24,6 +18,39 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
     const [isChatModeOn, setIsChatModeOn] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
+
+    const [showScrollButton, setShowScrollButton] = useState(false);
+    const [chatHeight, setChatHeight] = useState(0);
+    const chatRef = useRef(null);
+    const pauseRef = useRef(false);
+
+    const [ messageApi, contextHolder ] = message.useMessage();
+
+    const chatBoxContainer = {
+        width: "100%",
+        height: "100%",
+        border: "1px solid rgba(217, 217, 217, 0.7)",
+        borderRadius: "8px",
+        padding: "8px 12px",
+    
+        display: "flex", 
+        flexDirection: "column", 
+        gap: "12px"
+    };
+    const buttonRow = {
+        display: "flex",
+        justifyContent: "space-between", // or "flex-start" with `gap`
+        alignItems: "center",
+        flexWrap: "wrap",
+        gap: "8px",
+    };
+    const downCircleStyle = {
+		position: "fixed",
+		bottom: `${chatHeight + 55}px`,
+		left: "50%",
+		transform: "translateX(-50%)",
+		opacity: 0.8,
+	};
 
     const {
         transcript,
@@ -68,11 +95,46 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
         }
     }, [listening, transcript]);
 
+    // scrolling button functions
+    const scrollToBottom = () => {
+        const content = document.querySelector(".ant-layout-content");
+        content.scrollTo({
+            top: content.scrollHeight,
+            behavior: "smooth"
+        });
+    };
+    // runs when component mounts (load for the 1st time)
+    useEffect(() => {
+        const content = document.querySelector(".ant-layout-content");
+        const checkScroll = () => {
+            setShowScrollButton(
+                content.scrollHeight - content.scrollTop - content.clientHeight> 100
+            );
+        };
+        content.addEventListener("scroll", checkScroll);
+        return () => content.removeEventListener("scroll", checkScroll);
+    }, []);
+
+    // useLayoutEffect: react hook that runs after DOM mutation, but before browser paints the screen
+    // use this when code needs to measure DOM (width, height...) before it becomes visible
+    useLayoutEffect(() => {
+        const observer = new ResizeObserver(entries => {
+            for(let entry of entries){
+                // filter to find the div/element we care about
+                if(entry.target === chatRef.current)
+                    setChatHeight(entry.contentRect.height);
+            }
+        });
+
+        if(chatRef.current) observer.observe(chatRef.current);
+        return () => observer.disconnect();
+    }, []);
+
     // creating typing output effect
     const typingSpeed = 20;             // ms per char
     const bufferRef = useRef("");       // perserve 1 chunk of data
     const typeOut = () => {
-        if(bufferRef.current.length === 0) {
+        if(bufferRef.current.length === 0 || pauseRef.current) {
             isTypingRef.current = false;
             return;
         }
@@ -92,6 +154,7 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
         finalAnsRef.current = "";
         finalHighlightRef.current = "";
         bufferRef.current = "";
+        pauseRef.current = false;
 
         setLiveAnswer("");
         setHighlight("");
@@ -109,7 +172,7 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
                 finalAnsRef.current += chunk;
                 bufferRef.current += chunk;
 
-                if(!isTypingRef.current){
+                if(!isTypingRef.current && !pauseRef.current){
                     isTypingRef.current = true;
                     typeOut();
                 }
@@ -119,10 +182,12 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
                 // but if we were to clear liveAnswer immediately, 
                 // our display will be cutoff, and then new chunks are still coming in...
                 const waitTypingDone = setInterval(() => {
-                    if(!isTypingRef.current && bufferRef.current.length === 0){
+                    if((!isTypingRef.current && bufferRef.current.length === 0) || pauseRef.current){
                         clearInterval(waitTypingDone);
-
-                        handleResp(finalAnsRef.current, finalHighlightRef.current);
+                        
+                        if(!pauseRef.current)
+                            handleResp(finalAnsRef.current, finalHighlightRef.current);
+                        
                         // setIsLoading duration: immediately after Q's sent && before liveAnswer appears
                         setIsLoading(false);
                         setLiveAnswer("");
@@ -139,6 +204,22 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
                 setIsLoading(false);
             }
         );
+    };
+    const responseCancelHandler = () => {
+        pauseRef.current = true;
+
+        const waitTypingDone = setInterval(() => {
+            if(pauseRef.current || !isTypingRef.current || bufferRef.current.length === 0){
+                isTypingRef.current = false;
+                bufferRef.current = "";
+                clearInterval(waitTypingDone);
+
+                handleResp(finalAnsRef.current, finalHighlightRef.current);
+                setIsLoading(false);
+                setLiveAnswer("");
+                setHighlight("");
+            }
+        }, 50);
     };
 
     const talk = (what2say) => {
@@ -158,13 +239,15 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
             }
         });
     };
-    const chatModeClickHandler = () => {
-        setIsChatModeOn(!isChatModeOn);
-        setIsRecording(false);
-        SpeechRecognition.stopListening();
-    };
+    // const chatModeClickHandler = () => {
+    //     setIsChatModeOn(!isChatModeOn);
+    //     setIsRecording(false);
+    //     SpeechRecognition.stopListening();
+    // };
     const recordingClickHandler = () => {
-        if(isRecording){
+        setIsChatModeOn(!isChatModeOn);
+
+        if(isChatModeOn && isRecording){
             setIsRecording(false);
             SpeechRecognition.stopListening();
         } else {
@@ -172,7 +255,7 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
             SpeechRecognition.startListening({ continuous: false });
         }
     };
-    const mutingClickHandler = () => {
+    const pausingClickHandler = () => {
         // prev is current state value before update
         setIsPaused((prev) => {
             const currPaused = !prev;
@@ -185,6 +268,19 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
             }
             return currPaused;
         });
+    };
+    const pressEnterHandler = (e) => {
+        if(isLoading){
+            messageApi.warning("Hold on! A response is still generating...", 1);
+        }
+        else if(isChatModeOn){
+            messageApi.warning("Turn off chat mode to send text", 1);
+        }
+        // when enter is pressed but shift is NOT pressed, send LLM the user question
+        else if(!e.shiftKey && searchValue.trim() !== ""){
+            e.preventDefault();
+            onSearch(searchValue);
+        }
     };
 
     const handleChange = (e) => {
@@ -203,103 +299,119 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
         startChat(filePath, question);
     };
 
-    return (
-        <div style={searchContainer}>
-            <Popover
-                content={
-                    <PdfUploader 
-                        setFilePath={setFilePath} 
-                        setIsUploaded={setIsUploaded}
-                        setTreeData={setTreeData}
-                    />
-                }
-                title="Upload PDF"
-                trigger="click"
-                placement="bottomLeft" // position of tooltip relative to the target(button)
-                arrow={{ pointAtCenter: true }}
-            >
+    return(
+        <div 
+            style={chatBoxContainer}
+            ref={chatRef}
+        >
+            {contextHolder}
+            {showScrollButton &&
                 <Button 
                     type="primary"
                     size="large"
-                    icon={<PlusCircleOutlined/>}
-                    style={{ 
-                        margin: "0 5px 0 5px", // top, right, bottom, left
-                        height: "42px"
-                    }} 
-                >
-                    Upload
-                </Button>
-            </Popover>
-
-            {/* the search bar implementation */}
-            {!isChatModeOn &&
-                <Input.TextArea // subcomponent: multi-line text box
-                    placeholder="Ask Anything"
-                    autoSize={{ 
-                        minRows: 1, 
-                        maxRows: 6 
-                    }}
-                    value={searchValue}
-                    onChange={handleChange}
-                    onPressEnter={(e) => {
-                        // when enter is pressed but shift is NOT pressed, send LLM the user question
-                        if(!e.shiftKey && searchValue.trim() !== ""){
-                            e.preventDefault();
-                            onSearch(searchValue);
-                        }
-                    }}
-                    style={{ 
-                        flex: 1,
-                        fontSize: "16px",
-                        lineHeight: "1.5", 
-                        padding: "8px 12px",
-                    }}
+                    shape='circle'
+                    icon={<DownCircleOutlined/>}
+                    onClick={scrollToBottom}
+                    style={downCircleStyle}
                 />
             }
-            <Button
-                type="primary"
-                size="large"
-                danger={isChatModeOn}
-                onClick={chatModeClickHandler}
-                style={{ 
-                    marginLeft: "5px",
-                    height: "42px"
-                }}
-            >
-                Chat Mode: {isChatModeOn? "On" : "Off"}
-            </Button>
 
-            {
-            isChatModeOn && 
-                <Button
-                    type="primary"
-                    icon={<AudioOutlined />}
-                    size="large"
-                    danger={isRecording}
-                    onClick={recordingClickHandler}
-                    style={{ 
-                        marginLeft: "5px",
-                        height: "42px"
+            {/* Search bar */}
+            <Input.TextArea
+                placeholder="Ask Anything"
+                autoSize={{ 
+                    minRows: 1, 
+                    maxRows: 7
+                }}
+                value={searchValue}
+                onChange={handleChange}
+                onPressEnter={pressEnterHandler}
+                style={{ 
+                    flexGrow: 1,
+                    fontSize: "16px",
+                    lineHeight: "1.5",
+                    padding: "5px 10px 0px 10px",
+                    border: "none",                // no border
+                    boxShadow: "none",             // no inner shadow
+                    resize: "none",
+                    outline: "none",               // no blue border when focused
+                    backgroundColor: "transparent" // match container
+                }}
+            />
+
+            {/* Action buttons */}
+            <div 
+                style={buttonRow}
+            >
+                <Popover
+                    content={
+                        <PdfUploader 
+                            setFilePath={setFilePath} 
+                            setIsUploaded={setIsUploaded}
+                            setTreeData={setTreeData}
+                        />
+                    }
+                    title="Upload PDF"
+                    trigger="click"
+                    placement="bottomLeft" // position of tooltip relative to the target(button)
+                    arrow={{ pointAtCenter: true }}
+                >
+                    <Button 
+                        type="primary"
+                        size="middle"
+                        shape="circle"
+                        icon={<PlusCircleOutlined/>}
+                    />
+                </Popover>
+
+                <div 
+                    style={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        alignItems: "center",
+                        gap: "8px"
                     }}
                 >
-                    {isRecording ? "Recording..." : "Click to Record"}
-                </Button>
-            }
-            {
-            isChatModeOn && 
-                <Button
-                    type="primary"
-                    icon={isPaused && isRecording? <PauseCircleOutlined /> : <PlayCircleOutlined />}
-                    size="large"
-                    danger={isPaused && isRecording}
-                    onClick={mutingClickHandler}
-                    style={{ 
-                        marginLeft: "5px",
-                        height: "42px"
-                    }}
-                >
-                </Button>
-            }
+                    <Button
+                        type="primary"
+                        size="middle"
+                        shape="circle"
+                        icon={isPaused && isRecording? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+                        disabled={!isChatModeOn}
+                        danger={isPaused && isRecording}
+                        onClick={pausingClickHandler}
+                    />
+                    <Button
+                        type="primary"
+                        size="middle"
+                        shape="circle"
+                        icon={<AudioOutlined />}
+                        danger={isChatModeOn}
+                        onClick={recordingClickHandler}
+                    />
+
+                    {isLoading ?
+                        // response cancel
+                        (<Button
+                            type="primary"
+                            size="middle"
+                            shape="circle"
+                            icon={<BorderOutlined />}
+                            onClick={responseCancelHandler}
+                        />)
+                        :
+                        // response send
+                        (<Button
+                            type="primary"
+                            size="middle"
+                            shape="circle"
+                            disabled={isChatModeOn}
+                            icon={<ArrowUpOutlined />}
+                            onClick={pressEnterHandler}
+                        />)
+                    }
+                </div>
+            </div>
         </div>
     )
 };

@@ -29,6 +29,8 @@ const agentContainer = {
 };
 const agentStyle = {
     maxWidth: "50%",
+    fontSize: 14,
+    lineHeight: 1.3,
     textAlign: "left",
     backgroundColor: "#E5E5EA", // iMessage light grey
     color: "black",
