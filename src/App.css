@@ -1,0 +1,14 @@
+.avatar-style {
+    background-color: rgba(239, 238, 238, 0.942);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    color: #000;
+    transition: all 0.3s ease-in-out;
+    border: 1px solid rgba(255, 255, 255, 0.5); 
+}
+  
+.avatar-style:hover {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+    transform: scale(1.15) rotateZ(1deg);
+}

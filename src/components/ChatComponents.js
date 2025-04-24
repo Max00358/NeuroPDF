@@ -33,7 +33,7 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
 
     // searchValue is user's input text, we dig them out from Search->onSearch
     const [searchValue, setSearchValue] = useState("")
-    const [speech, setSpeech] = useState();
+    const [speech, setSpeech] = useState("");
 
     const [isRecording, setIsRecording] = useState(false);
     const [isSpeaking, setIsSpeaking] = useState(false);
@@ -79,6 +79,7 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
             })
             .catch((e) => {
                 console.log("error occured during init:", e);
+                setSpeech("");
             })
     }, []);
 
@@ -90,8 +91,7 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
     // no []
         // runs every re-render (expensive!)
     useEffect(() => {
-        // !!transcript forces it to be a boolean
-        if(!listening && !!transcript){
+        if(!listening && !!transcript){ // !!transcript forces it to be a boolean
             (async() => await onSearch(transcript))();
             setIsRecording(false);
         }
@@ -235,6 +235,7 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
                 },
                 onend: () => {
                     console.log("end utterance");
+                    setSpeech("");
                     setIsSpeaking(false);
                 },
                 onboundary: (event) => {
@@ -246,8 +247,8 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
     const recordingClickHandler = () => {
         setIsRecording(!isRecording);
         if(isRecording){
-            setIsRecording(false);
             SpeechRecognition.stopListening();
+            setIsRecording(false);
         } else {
             setIsRecording(true);
             SpeechRecognition.startListening({ continuous: false });
