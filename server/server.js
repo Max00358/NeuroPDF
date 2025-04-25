@@ -69,6 +69,9 @@ app.post("/upload", clearBeforeUpload, upload.single("file"), async(req, res) =>
     res.json({ filePath : req.file.path });
 });
 
+// expose the uploaded PDF onto express 5001 port so that react-pdf can see it
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 app.listen(PORT, ()=>{
     console.log(`Server is running on port ${PORT}`);
 });

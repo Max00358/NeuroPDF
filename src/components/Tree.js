@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import ReactD3Tree from "react-d3-tree";
 import { CloseCircleOutlined, HomeOutlined, CameraOutlined } from "@ant-design/icons";
-import { Button, message } from "antd";
+import { Button } from "antd";
 import renderNode from "./RenderNode";
 import * as htmlToImage from 'html-to-image';
 import { saveAs } from 'file-saver';
@@ -19,7 +19,6 @@ const treeContainerStyle = {
     backdropFilter: "blur(6px)",
 
     borderRadius: "8px",
-    //padding: "20px",
     zIndex: 0,
 
     overflow: "hidden"
@@ -57,13 +56,8 @@ const treeDownloadStyle={
     top: "88px",
 };
 
-const msgStyle = {
-    margin: '70px 0 0 0',
-};
-
 const TreeGraph = React.memo(({ data }) => {
     const { filePath, treeData, setTreeData, showTree, setShowTree } = data;
-    const [ messageApi, contextHolder ] = message.useMessage();
 
     const hasFetchedRef = useRef(false);
     const initialTranslateRef = useRef(null);
@@ -74,7 +68,7 @@ const TreeGraph = React.memo(({ data }) => {
     const [resetCounter, setResetCounter] = useState(0);
     const [nodeCount, setNodeCount] = useState(1);
 
-    const API_URL = 'http://127.0.0.1:7860';
+    const API_URL = process.env.REACT_APP_FAST_API_DOMAIN; //'http://127.0.0.1:7860';
 
     const countNodes = (node) => {
         if (!node) return 0;
@@ -161,7 +155,7 @@ const TreeGraph = React.memo(({ data }) => {
         return () => clearInterval(pollingRef.current);
     }, [filePath]);
 
-    // count total nodes ~ use nodeCount to adjust download resolution
+    // count total nodes: use nodeCount to adjust download resolution
     useEffect(() => {
         if (!treeData) return;
       
@@ -172,50 +166,14 @@ const TreeGraph = React.memo(({ data }) => {
         setNodeCount(total);
     }, [treeData]);
 
-    const key = 'treeLoading'; // used to identify & update existing msg
-    useEffect(() => {
-        if(!filePath) return;
-
-        if (!treeData) {
-            messageApi.loading({
-                key,
-                style: msgStyle,
-                content: 'Analyzing PDF...',
-                duration: 0
-            });
-        } 
-        else if(treeData){
-            messageApi.open({
-                key,           // using same key makes sure the same msg gets updated
-                type: 'success',
-                style: msgStyle,
-                content: (
-                    <span 
-                        onClick={() => setShowTree(true)} 
-                        style={{ cursor: 'pointer'}}
-                    >
-                        View Tree
-                    </span>
-                ),
-                duration: 0
-            });
-        }
-    }, [treeData, filePath]);
-
     if (!treeData) {
         return (
-            <>
-                {contextHolder}
-                {/* <div style={agentStyle}>
-                    Loading Tree Graph...
-                </div> */}
-            </>
+            <></>
         )
     }
 
     return (
         <>
-            {contextHolder}
             {showTree &&
                 <div
                     style={treeContainerStyle}

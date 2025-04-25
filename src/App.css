@@ -6,6 +6,7 @@
     color: #000;
     transition: all 0.3s ease-in-out;
     border: 1px solid rgba(255, 255, 255, 0.5); 
+    cursor: pointer;
 }
   
 .avatar-style:hover {

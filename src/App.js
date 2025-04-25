@@ -8,6 +8,7 @@ import TreeGraph from './components/Tree';
 import { Layout, Avatar } from "antd";
 import { RightOutlined, FilePdfOutlined, PartitionOutlined } from "@ant-design/icons";
 import logo from "./graphics/logo192.png";
+import RenderPDF from "./components/RenderPDF";
 import "./App.css"
 
 const layoutStyles = {
@@ -28,9 +29,9 @@ const headerStyles = {
 	alignItems: "center",
 	height: "80px",
 	padding: "0 24px",
-	boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
+	//boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
 	borderBottom: "1px solid #e0e0e0",
-	zIndex: 5,     // stays above all content
+	zIndex: 3,     // stays above all content
 };
 
 const profileContainerStyles = {
@@ -53,7 +54,7 @@ const textContainerStyles = {
 const contentStyles = {
 	flex: 1,
 	overflowY: "auto",
-	padding: "80px 0px 120px 0px",
+	padding: "5px 0px 120px 0px",
 	width: "100%",
 	marginTop: "80px",
 };
@@ -96,7 +97,10 @@ const App = () => {
 
 	const [isLoading, setIsLoading] = useState(false);
 	const [isUploaded, setIsUploaded] = useState(false);
+
 	const [showTree, setShowTree] = useState(false);
+	const [showPDF, setShowPDF] = useState(false);
+	const [loadingPDF, setLoadingPDF] = useState(false);
 
 	const [filePath, setFilePath] = useState(null);
 	const [treeData, setTreeData] = useState(null);
@@ -108,6 +112,10 @@ const App = () => {
 		// using append/push will NOT trigger re-render, which is why we don't use it here
 		setConversation([...conversation, { answer, highlight_text }]);
 	};
+	const pdfAvatarHandler = () => {
+		setLoadingPDF(!loadingPDF);
+		setShowPDF(!showPDF);
+	}
 
   	return (
 		<>
@@ -128,6 +136,7 @@ const App = () => {
 								className='avatar-style'
 								icon={<FilePdfOutlined />}
 								size="large"
+								onClick={pdfAvatarHandler} 
 							/>
 						}
 						{treeData &&
@@ -135,6 +144,7 @@ const App = () => {
 								className='avatar-style'
 								icon={<PartitionOutlined />}
 								size="large"
+								onClick={() => setShowTree(!showTree)}
 							/>
 						}
 					</Avatar.Group> 
@@ -153,6 +163,11 @@ const App = () => {
 								data={{ filePath, treeData, setTreeData, showTree, setShowTree }}
 							/>
 						</div>
+					)}
+					{isUploaded && (
+						<RenderPDF 
+							data={{ filePath, showPDF, loadingPDF, setLoadingPDF }} 
+						/>
 					)}
 					<RenderQA 
 						chatState={{ conversation, conversation_q, isLoading, liveAnswer, highlight }}
