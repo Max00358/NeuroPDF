@@ -1,6 +1,6 @@
 import { Button, message, Spin } from "antd";
-import { ZoomInOutlined, ZoomOutOutlined, HomeOutlined, BookTwoTone } from "@ant-design/icons";
-import React, { useState, useEffect, useRef } from "react";
+import { ZoomInOutlined, ZoomOutOutlined, HomeOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import React, { useState, useRef } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
@@ -12,18 +12,27 @@ const REACT_URL = process.env.REACT_APP_DOMAIN;
 const pdfContainerStyle = {
     position: "relative",
     boxSizing: "border-box",
-    height: "71vh",
-    borderRadius: "8px",
-    zIndex: 0,
+    height: "61.9vh",
 };
-
 const scrollContainerStyle = {
     overflowY: "auto",
     height: "100%",
+    borderRadius: "8px",
+
+    display: "flex",
+    justifyContent: "center",
+};
+const pdfBackgroundContainerStyle = {
+    height: "100%",
+    backgroundColor: "rgb(255, 255, 255)",
+
+    display: "flex",
+    justifyContent: "center",
+    zIndex: 0,
 };
 
 const RenderPDF = ({ data }) => {
-    const { filePath, showPDF, loadingPDF, setLoadingPDF } = data;
+    const { filePath, showPDF, setShowPDF } = data;
     const fileName = filePath.replace(/^.*[\\\/]/, '')
     const fileUrl = `${REACT_URL}/uploads/${encodeURIComponent(fileName)}`; // encodeURIComponent for URL safety
 
@@ -31,17 +40,18 @@ const RenderPDF = ({ data }) => {
     const errorShownRef = useRef(false);
 
     const [numPages, setNumPages] = useState(null);
-    const [scale, setScale] = useState(1.0);
+    const defaultScale = 0.5;
+    const [scale, setScale] = useState(defaultScale);
 
     const buttonListStyle = {
         position: "absolute", 
         top: "1.5%", // 1.5% gives weird err, zoom in only half clickable?!
-        right: "7px",
+        right: "10px",
     
         display: "flex",
         flexDirection: "column",
         gap: "7px",
-        zIndex: pdfContainerStyle.zIndex + 3, 
+        zIndex: 3, 
         
         alignItems: "flex-end",
         cursor: "pointer",
@@ -53,7 +63,6 @@ const RenderPDF = ({ data }) => {
 
     const onDocumentLoadSuccess = ({ numPages }) => {
         setNumPages(numPages);
-        setLoadingPDF(false);
         errorShownRef.current = false; // reset
     };
     const onDocumentLoadError = () => {
@@ -69,31 +78,40 @@ const RenderPDF = ({ data }) => {
         }
     };
     const zoomInHandler = () => {
-        setScale(prev => Math.min(2, prev + 0.1));
+        setScale(prev => Math.min(2.0, prev + 0.1));
     };
     const zoomOutHandler = () => {
-        setScale(prev => Math.max(0.5, prev - 0.1));
+        setScale(prev => Math.max(0.1, prev - 0.1));
     };
     const homeHandler = () => {
-        setScale(1.0);
+        setScale(defaultScale);
     };
-
-    useEffect(() => {
-        if (loadingPDF)
-            messageApi.loading("Loading PDF...", 0.5);
-    }, [loadingPDF]);
 
     return (
         <>
             {contextHolder}
             {showPDF &&
-                <>
+            <>
                 <div
                     style={pdfContainerStyle}
                 >
                     <span
                         style={buttonListStyle}
                     >
+                        <Button
+                            type="primary"
+                            size="middle"
+                            shape='circle'
+                            icon={<CloseCircleOutlined/>}
+                            onClick={() => setShowPDF(false)}
+                        />
+                        <Button
+                            type="primary"
+                            size="middle"
+                            shape='circle'
+                            icon={<HomeOutlined />}
+                            onClick={homeHandler}
+                        />
                         <Button
                             type="primary"
                             size="middle"
@@ -108,36 +126,33 @@ const RenderPDF = ({ data }) => {
                             icon={<ZoomOutOutlined />}
                             onClick={zoomOutHandler}
                         />
-                        <Button
-                            type="primary"
-                            size="middle"
-                            shape='circle'
-                            icon={<HomeOutlined />}
-                            onClick={homeHandler}
-                        />
                     </span>
 
                     <div 
-                        style={scrollContainerStyle}
+                        style={pdfBackgroundContainerStyle}
                     >
-                        <Document
-                            file={fileUrl}
-                            loading={<Spin tip="Loading PDF..." />}
-                            onDocumentLoadSuccess={onDocumentLoadSuccess}
-                            error={onDocumentLoadError}
+                        <div
+                            style={scrollContainerStyle}
                         >
-                            {Array.from(new Array(numPages), (el, index) => (
-                                <Page
-                                    key={`page_${index+1}`}
-                                    pageNumber={index + 1} // pageNumber starts from 1 not 0
-                                    width={900}
-                                    scale={scale}
-                                />
-                            ))}
-                        </Document>
+                            <Document
+                                file={fileUrl}
+                                loading={<Spin tip="Loading PDF..." />}
+                                onDocumentLoadSuccess={onDocumentLoadSuccess}
+                                error={onDocumentLoadError}
+                            >
+                                {Array.from(new Array(numPages), (el, index) => (
+                                    <Page
+                                        key={`page_${index+1}`}
+                                        pageNumber={index + 1} // pageNumber starts from 1 not 0
+                                        scale={scale}
+                                        width={1500}
+                                    />
+                                ))}
+                            </Document>
+                        </div>
                     </div>
                 </div>
-                </>
+            </>
             }
         </>
     );

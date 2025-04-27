@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import ReactD3Tree from "react-d3-tree";
-import { CloseCircleOutlined, HomeOutlined, CameraOutlined } from "@ant-design/icons";
+import { CloseCircleOutlined, HomeOutlined, CameraOutlined, LoadingOutlined } from "@ant-design/icons";
 import { Button } from "antd";
 import renderNode from "./RenderNode";
 import * as htmlToImage from 'html-to-image';
@@ -10,17 +10,13 @@ import { saveAs } from 'file-saver';
 const treeContainerStyle = { 
     position: "relative",
     boxSizing: "border-box",
-    top: "10px",
-    left: "0px",
-    right: "0px",
-    height: "71vh",
+    height: "61.9vh",
 
     backgroundColor: "rgba(194, 182, 182, 0.38)",
     backdropFilter: "blur(6px)",
 
-    borderRadius: "8px",
-    zIndex: 0,
-
+    //borderRadius: "8px",
+    zIndex: 1,
     overflow: "hidden"
 };
 
@@ -168,7 +164,15 @@ const TreeGraph = React.memo(({ data }) => {
 
     if (!treeData) {
         return (
-            <></>
+            <>
+                {showTree &&
+                    <div
+                        style={treeContainerStyle}
+                    >
+                        <LoadingOutlined />
+                    </div>
+                }
+            </>
         )
     }
 

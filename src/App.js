@@ -5,11 +5,13 @@ import React, { useState } from 'react';
 import ChatComponent from './components/ChatComponents';
 import RenderQA from './components/RenderQA';
 import TreeGraph from './components/Tree';
-import { Layout, Avatar } from "antd";
+import { Layout, Avatar, Tabs } from "antd";
 import { RightOutlined, FilePdfOutlined, PartitionOutlined } from "@ant-design/icons";
 import logo from "./graphics/logo192.png";
 import RenderPDF from "./components/RenderPDF";
 import "./App.css"
+
+const { TabPane } = Tabs;
 
 const layoutStyles = {
 	height: "100vh",
@@ -58,6 +60,20 @@ const contentStyles = {
 	width: "100%",
 	marginTop: "80px",
 };
+const tabStyle = {
+	position: "fixed",
+    top: "88px",
+    left: "50%",
+    transform: "translateX(-50%)",
+	height: "70vh",
+    zIndex: 1,
+    width: "90%",
+
+    backgroundColor: "white",
+    borderRadius: "8px",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+    padding: "20px",
+};
 
 const chatComponentStyle = {
 	position: "fixed",
@@ -80,11 +96,14 @@ const chatComponentStyle = {
 
 const treeOverlayStyle = {
 	position: "absolute",
-	top: "35px",
+	top: -16,
 	left: 0,
 	right: 0,
-	zIndex: 2,
-	padding: "40px",
+	justifyContent: "center",
+};
+
+const pdfOverlayStyle = {
+	marginTop: "-16px",
 	justifyContent: "center",
 };
 
@@ -100,7 +119,6 @@ const App = () => {
 
 	const [showTree, setShowTree] = useState(false);
 	const [showPDF, setShowPDF] = useState(false);
-	const [loadingPDF, setLoadingPDF] = useState(false);
 
 	const [filePath, setFilePath] = useState(null);
 	const [treeData, setTreeData] = useState(null);
@@ -112,10 +130,6 @@ const App = () => {
 		// using append/push will NOT trigger re-render, which is why we don't use it here
 		setConversation([...conversation, { answer, highlight_text }]);
 	};
-	const pdfAvatarHandler = () => {
-		setLoadingPDF(!loadingPDF);
-		setShowPDF(!showPDF);
-	}
 
   	return (
 		<>
@@ -136,10 +150,10 @@ const App = () => {
 								className='avatar-style'
 								icon={<FilePdfOutlined />}
 								size="large"
-								onClick={pdfAvatarHandler} 
+								onClick={() => setShowPDF(!showPDF)} 
 							/>
 						}
-						{treeData &&
+						{isUploaded &&
 							<Avatar
 								className='avatar-style'
 								icon={<PartitionOutlined />}
@@ -156,19 +170,47 @@ const App = () => {
 			</Header>
 
 			<Content style={contentStyles}>
-				<div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 24px" }}>
-					{isUploaded && (
-						<div style={treeOverlayStyle}>
-							<TreeGraph
-								data={{ filePath, treeData, setTreeData, showTree, setShowTree }}
-							/>
-						</div>
-					)}
-					{isUploaded && (
-						<RenderPDF 
-							data={{ filePath, showPDF, loadingPDF, setLoadingPDF }} 
-						/>
-					)}
+				{/* { width: "100%", padding: "0 24px" } */}
+				{ (showPDF || showTree) &&
+				<div style={tabStyle}> 
+					{isUploaded &&
+						<Tabs
+							type='card' //'editable-card'
+						>
+							{showTree &&				
+								<TabPane 
+									key="tree"
+									tab="Tree Graph"
+								>
+									<div style={treeOverlayStyle}>
+										<TreeGraph
+											data={{ filePath, treeData, setTreeData, showTree, setShowTree }}
+										/>
+									</div>
+								</TabPane>
+							}
+
+							{showPDF &&	
+								<TabPane
+									key="pdf"
+									tab="PDF Viewer"
+								>
+									<div style={pdfOverlayStyle}>
+										<RenderPDF 
+											data={{ filePath, showPDF, setShowPDF }} 
+										/>
+									</div>
+								</TabPane>
+							}
+						</Tabs>
+					}
+				</div>
+				}
+
+				{/* makes sure 1st msg has 40px distance from the header */}
+				<div 
+					style={{ maxWidth: "900px", margin: "40px auto 0", padding: "0 24px" }}
+				>
 					<RenderQA 
 						chatState={{ conversation, conversation_q, isLoading, liveAnswer, highlight }}
 					/>
