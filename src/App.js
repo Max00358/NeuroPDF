@@ -132,6 +132,14 @@ const App = () => {
 		// using append/push will NOT trigger re-render, which is why we don't use it here
 		setConversation([...conversation, { answer, highlight_text }]);
 	};
+	const closeTabHandler = (targetKey, action) => {
+		if(action === 'remove'){
+			if(targetKey === 'pdf')
+				setShowPDF(false);
+			else if(targetKey === 'tree')
+				setShowTree(false);
+		}
+	};
 
   	return (
 		<>
@@ -175,7 +183,9 @@ const App = () => {
 				{isUploaded && (showPDF || showTree) &&
 					<div style={tabStyle}> 
 						<Tabs
-							type='card' //'editable-card'
+							type='editable-card'
+							onEdit={closeTabHandler}
+							hideAdd
 						>
 							{showTree &&				
 								<TabPane 
@@ -184,7 +194,7 @@ const App = () => {
 								>
 									<div style={treeOverlayStyle}>
 										<TreeGraph
-											data={{ filePath, treeData, setTreeData, showTree, setShowTree }}
+											data={{ filePath, treeData, setTreeData, showTree }}
 										/>
 									</div>
 								</TabPane>
@@ -197,7 +207,7 @@ const App = () => {
 								>
 									<div style={pdfOverlayStyle}>
 										<RenderPDF 
-											data={{ filePath, showPDF, setShowPDF }} 
+											data={{ filePath, showPDF }} 
 										/>
 									</div>
 								</TabPane>

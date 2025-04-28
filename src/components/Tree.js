@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import ReactD3Tree from "react-d3-tree";
-import { CloseCircleOutlined, HomeOutlined, CameraOutlined, LoadingOutlined } from "@ant-design/icons";
+import { HomeOutlined, CameraOutlined, LoadingOutlined } from "@ant-design/icons";
 import { Button } from "antd";
 import renderNode from "./RenderNode";
 import * as htmlToImage from 'html-to-image';
@@ -39,21 +39,17 @@ const treeBaseButtonStyle={
         backgroundColor: "rgba(255, 255, 255, 1)",
     }
 };
-const treeCloseStyle = {
+const treeHomeStyle={
     ...treeBaseButtonStyle,
     top: "8px",
 };
-const treeHomeStyle={
+const treeDownloadStyle={
     ...treeBaseButtonStyle,
     top: "48px",
 };
-const treeDownloadStyle={
-    ...treeBaseButtonStyle,
-    top: "88px",
-};
 
 const TreeGraph = React.memo(({ data }) => {
-    const { filePath, treeData, setTreeData, showTree, setShowTree } = data;
+    const { filePath, treeData, setTreeData, showTree } = data;
 
     const hasFetchedRef = useRef(false);
     const initialTranslateRef = useRef(null);
@@ -184,13 +180,6 @@ const TreeGraph = React.memo(({ data }) => {
                     ref={containerRef}
                 >
                     <div className='export-ignore'>   
-                        <Button
-                            icon={<CloseCircleOutlined/>}
-                            size="large"
-                            type="link"
-                            onClick={() => setShowTree(false)}
-                            style={treeCloseStyle}
-                        />
                         <Button
                             icon={<HomeOutlined/>}
                             size="large"

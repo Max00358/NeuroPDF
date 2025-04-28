@@ -1,5 +1,5 @@
 import { Button, message, Spin } from "antd";
-import { ZoomInOutlined, ZoomOutOutlined, HomeOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import { ZoomInOutlined, ZoomOutOutlined, HomeOutlined, PieChartOutlined } from "@ant-design/icons";
 import React, { useState, useRef } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
@@ -33,7 +33,7 @@ const pdfBackgroundContainerStyle = {
 };
 
 const RenderPDF = ({ data }) => {
-    const { filePath, showPDF, setShowPDF } = data;
+    const { filePath, showPDF } = data;
     const fileName = filePath.replace(/^.*[\\\/]/, '')
     const fileUrl = `${REACT_URL}/uploads/${encodeURIComponent(fileName)}`; // encodeURIComponent for URL safety
 
@@ -103,13 +103,6 @@ const RenderPDF = ({ data }) => {
                             type="primary"
                             size="middle"
                             shape='circle'
-                            icon={<CloseCircleOutlined/>}
-                            onClick={() => setShowPDF(false)}
-                        />
-                        <Button
-                            type="primary"
-                            size="middle"
-                            shape='circle'
                             icon={<HomeOutlined />}
                             onClick={homeHandler}
                         />
@@ -126,6 +119,13 @@ const RenderPDF = ({ data }) => {
                             shape='circle'
                             icon={<ZoomOutOutlined />}
                             onClick={zoomOutHandler}
+                        />
+                        <Button
+                            type="primary"
+                            size="middle"
+                            shape='circle'
+                            icon={<PieChartOutlined />}
+                            //onClick={createChartHandler}
                         />
                     </span>
 
