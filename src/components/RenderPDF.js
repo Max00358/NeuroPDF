@@ -12,20 +12,21 @@ const REACT_URL = process.env.REACT_APP_DOMAIN;
 const pdfContainerStyle = {
     position: "relative",
     boxSizing: "border-box",
-    height: "61.9vh",
+    height: "64.6vh",
 };
 const scrollContainerStyle = {
     overflowY: "auto",
     height: "100%",
-    borderRadius: "8px",
 
     display: "flex",
     justifyContent: "center",
 };
 const pdfBackgroundContainerStyle = {
     height: "100%",
-    backgroundColor: "rgb(255, 255, 255)",
+    //backgroundColor: "rgba(194, 182, 182, 0.38)",
+    //backdropFilter: "blur(6px)",
 
+    borderRadius: "0 0 8px 8px",
     display: "flex",
     justifyContent: "center",
     zIndex: 0,

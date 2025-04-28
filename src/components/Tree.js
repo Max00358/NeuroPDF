@@ -10,12 +10,12 @@ import { saveAs } from 'file-saver';
 const treeContainerStyle = { 
     position: "relative",
     boxSizing: "border-box",
-    height: "61.9vh",
+    height: "64.6vh",
 
-    backgroundColor: "rgba(194, 182, 182, 0.38)",
-    backdropFilter: "blur(6px)",
+    //backgroundColor: "rgba(194, 182, 182, 0.38)",
+    //backdropFilter: "blur(6px)",
 
-    //borderRadius: "8px",
+    borderRadius: "0 0 8px 8px",
     zIndex: 1,
     overflow: "hidden"
 };

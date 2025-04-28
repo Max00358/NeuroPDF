@@ -69,10 +69,12 @@ const tabStyle = {
     zIndex: 1,
     width: "90%",
 
-    backgroundColor: "white",
+	backgroundColor: "rgba(194, 182, 182, 0.38)",
+    backdropFilter: "blur(8px)",
+
     borderRadius: "8px",
     boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-    padding: "20px",
+    //padding: "20px",
 };
 
 const chatComponentStyle = {
@@ -170,10 +172,8 @@ const App = () => {
 			</Header>
 
 			<Content style={contentStyles}>
-				{/* { width: "100%", padding: "0 24px" } */}
-				{ (showPDF || showTree) &&
-				<div style={tabStyle}> 
-					{isUploaded &&
+				{isUploaded && (showPDF || showTree) &&
+					<div style={tabStyle}> 
 						<Tabs
 							type='card' //'editable-card'
 						>
@@ -203,8 +203,7 @@ const App = () => {
 								</TabPane>
 							}
 						</Tabs>
-					}
-				</div>
+					</div>
 				}
 
 				{/* makes sure 1st msg has 40px distance from the header */}
@@ -221,9 +220,9 @@ const App = () => {
 				style={chatComponentStyle}
 			>
 				<ChatComponent
-					msgState={{ handleResp, isLoading, setIsLoading, setConversationQ, setLiveAnswer, highlight, setHighlight }}
-					fileState={{ filePath, setFilePath, setIsUploaded}}
-					treeState={{ setTreeData }}
+					msgState={{ handleResp, isLoading, setIsLoading, setConversationQ, setLiveAnswer, setHighlight }}
+					fileState={{ filePath, setFilePath, setIsUploaded }}
+					treeState={{ setTreeData, showTree, showPDF }}
 				/>
 			</div>
 		</Layout>

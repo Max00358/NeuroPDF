@@ -27,9 +27,9 @@ const buttonRow = {
 };
 
 const ChatComponent = ({ msgState, fileState, treeState }) => {
-    const { handleResp, isLoading, setIsLoading, setConversationQ, setLiveAnswer, highlight, setHighlight } = msgState;
+    const { handleResp, isLoading, setIsLoading, setConversationQ, setLiveAnswer, setHighlight } = msgState;
 	const { filePath, setFilePath, setIsUploaded } = fileState;
-	const { setTreeData } = treeState;
+	const { setTreeData, showTree, showPDF } = treeState;
 
     // searchValue is user's input text, we dig them out from Search->onSearch
     const [searchValue, setSearchValue] = useState("")
@@ -304,7 +304,7 @@ const ChatComponent = ({ msgState, fileState, treeState }) => {
             ref={chatRef}
         >
             {contextHolder}
-            {showScrollButton &&
+            {!showTree && !showPDF && showScrollButton &&
                 <Button 
                     type="primary"
                     size="large"
