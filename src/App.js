@@ -182,6 +182,7 @@ const App = () => {
 			<Content style={contentStyles}>
 				{isUploaded && (showPDF || showTree) &&
 					<div style={tabStyle}> 
+					
 						<Tabs
 							type='editable-card'
 							onEdit={closeTabHandler}
@@ -199,7 +200,6 @@ const App = () => {
 									</div>
 								</TabPane>
 							}
-
 							{showPDF &&	
 								<TabPane
 									key="pdf"

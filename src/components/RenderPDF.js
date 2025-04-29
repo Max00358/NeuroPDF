@@ -1,9 +1,10 @@
 import { Button, message, Spin } from "antd";
-import { ZoomInOutlined, ZoomOutOutlined, HomeOutlined, PieChartOutlined } from "@ant-design/icons";
-import React, { useState, useRef } from "react";
+import { ZoomInOutlined, ZoomOutOutlined, HomeOutlined, PieChartOutlined, StopOutlined } from "@ant-design/icons";
+import React, { useState, useRef, useEffect } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
+import Canva from "./Canva";
 
 // adding REACT_APP_ prefix means .env var is safe to be exposed to front-end
 pdfjs.GlobalWorkerOptions.workerSrc = process.env.REACT_APP_PDF_WORKER_URL;
@@ -14,6 +15,23 @@ const pdfContainerStyle = {
     boxSizing: "border-box",
     height: "64.6vh",
 };
+const buttonListStyle = {
+    position: "absolute", 
+    top: "1.5%",
+    right: "10px",
+
+    display: "flex",
+    flexDirection: "column",
+    gap: "7px",
+    zIndex: 3, 
+    
+    alignItems: "flex-end",
+    cursor: "pointer",
+    
+    ":hover": {
+        backgroundColor: "rgba(255, 255, 255, 1)",
+    }
+}
 const scrollContainerStyle = {
     overflowY: "auto",
     height: "100%",
@@ -44,23 +62,18 @@ const RenderPDF = ({ data }) => {
     const defaultScale = 0.5;
     const [scale, setScale] = useState(defaultScale);
 
-    const buttonListStyle = {
-        position: "absolute", 
-        top: "1.5%", // 1.5% gives weird err, zoom in only half clickable?!
-        right: "10px",
-    
-        display: "flex",
-        flexDirection: "column",
-        gap: "7px",
-        zIndex: 3, 
-        
-        alignItems: "flex-end",
-        cursor: "pointer",
-        
-        ":hover": {
-            backgroundColor: "rgba(255, 255, 255, 1)",
+    const pdfContainerRef = useRef(null);
+    const [pdfSize, setPdfSize] = useState({ width: 0, height: 0 });
+    const [isDrawing, setIsDrawing] = useState(false);
+
+    useEffect(() => {
+        if(pdfContainerRef.current){
+            const offsetWidth = pdfContainerRef.current.offsetWidth;
+            const offsetHeight = pdfContainerRef.current.offsetHeight;
+
+            setPdfSize({ width: offsetWidth, height: offsetHeight });
         }
-    }
+    }, [numPages, scale]);
 
     const onDocumentLoadSuccess = ({ numPages }) => {
         setNumPages(numPages);
@@ -86,6 +99,15 @@ const RenderPDF = ({ data }) => {
     };
     const homeHandler = () => {
         setScale(defaultScale);
+    };
+
+    const startDrawingHandler = () => {
+        console.log("isDrawing: TRUE!");
+        setIsDrawing(true);
+    };
+    const stopDrawingHandler = () => {
+        console.log("isDrawing: FALSE!");
+        setIsDrawing(false);
     };
 
     return (
@@ -124,20 +146,26 @@ const RenderPDF = ({ data }) => {
                             type="primary"
                             size="middle"
                             shape='circle'
-                            icon={<PieChartOutlined />}
-                            //onClick={createChartHandler}
+                            danger={isDrawing? true : false}
+                            icon={isDrawing? <StopOutlined /> : <PieChartOutlined />}
+                            onClick={isDrawing? stopDrawingHandler : startDrawingHandler}
                         />
                     </span>
 
                     <div 
                         style={pdfBackgroundContainerStyle}
+                        ref={pdfContainerRef} // ref works on DOM element (div) but not on react-components (Document)
                     >
                         <div
                             style={scrollContainerStyle}
                         >
                             <Document
                                 file={fileUrl}
-                                loading={<Spin tip="Loading PDF..." />}
+                                loading={
+                                    <Spin tip="Loading PDF..." >
+                                        <div style={{ minHeight: 100 }} />
+                                    </Spin>
+                                }
                                 onDocumentLoadSuccess={onDocumentLoadSuccess}
                                 error={onDocumentLoadError}
                             >
@@ -150,6 +178,19 @@ const RenderPDF = ({ data }) => {
                                     />
                                 ))}
                             </Document>
+
+                            <div style={{
+                                position: "absolute",
+                                top: 0,
+                                left: 0,
+                                cursor: isDrawing? "crosshair" : "default",
+                                zIndex: 2,
+                            }}>
+                                <Canva 
+                                    drawStatus={{ isDrawing, setIsDrawing }} 
+                                    pdfSize={ pdfSize }
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
