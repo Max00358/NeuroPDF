@@ -65,6 +65,7 @@ const RenderPDF = ({ data }) => {
     const pdfContainerRef = useRef(null);
     const [pdfSize, setPdfSize] = useState({ width: 0, height: 0 });
     const [isDrawing, setIsDrawing] = useState(false);
+    const [tickCrossClicked, setTickCrossClicked] = useState(false);
 
     useEffect(() => {
         if(pdfContainerRef.current){
@@ -183,11 +184,10 @@ const RenderPDF = ({ data }) => {
                                 position: "absolute",
                                 top: 0,
                                 left: 0,
-                                cursor: isDrawing? "crosshair" : "default",
-                                zIndex: 2,
+                                zIndex: (isDrawing || !tickCrossClicked) ? 2 : 1,
                             }}>
                                 <Canva 
-                                    drawStatus={{ isDrawing, setIsDrawing }} 
+                                    drawStatus={{ isDrawing, setIsDrawing, setTickCrossClicked }} 
                                     pdfSize={ pdfSize }
                                 />
                             </div>
