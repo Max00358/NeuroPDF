@@ -1,8 +1,9 @@
 import { Stage, Layer, Rect, Group, Text } from 'react-konva';
 import React, { useState, useRef, useEffect } from "react";
 
-const Canva = ({ drawStatus, pdfSize }) => {
+const Canva = ({ drawStatus, pdfStatus }) => {
     const { isDrawing, setIsDrawing, setTickCrossClicked } = drawStatus;
+    const { pdfSize, scale, filePath } = pdfStatus;
 
     const [tempBox, setTempBox] = useState(null);   // temporary box
     const [hoverButton, setHoverButton] = useState(null);
@@ -45,7 +46,7 @@ const Canva = ({ drawStatus, pdfSize }) => {
         setShowButton(true);
     };
 
-    const confirmBoxHandler = () => {
+    const confirmBoxHandler = async (e) => {
         console.log("Confirm Clicked");
 
         if(stageRef.current) 
@@ -54,6 +55,33 @@ const Canva = ({ drawStatus, pdfSize }) => {
         setTempBox(null);
         setTickCrossClicked(true);
         setIsDrawing(false);
+
+        // top left origin, grows downwards
+        const backendBox = {
+            filePath: filePath,
+            x: tempBox ? (tempBox.x) * scale/2.7 : 0,
+            y: tempBox ? (tempBox.y) * scale*1.65 : 0,
+            width: tempBox ? tempBox.width*0.82 : 0,
+            height: tempBox ? tempBox.height*0.82 : 0,
+            page: 0,
+        };
+
+        try{
+            const DOMAIN = process.env.REACT_APP_FAST_API_DOMAIN;
+            const res = await fetch(`${DOMAIN}/extract-tables`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(backendBox),
+            });
+
+            const data = await res.json();
+            console.log("Backend response:", data);
+        }
+        catch(err){
+            console.error("Error sending box to backend:", err);
+        }
     };
     const cancelBoxHandler = () => {
         console.log("Cancel Clicked");
@@ -123,7 +151,7 @@ const Canva = ({ drawStatus, pdfSize }) => {
                                 width={24}
                                 height={24}
                                 fill={hoverButton === "confirm"? "#66cc66" : "green"}
-                                onClick={confirmBoxHandler}
+                                onClick={(e) => confirmBoxHandler(e)}
                                 onMouseEnter={(e) => mouseEnterHandler(e, "confirm")}
                                 onMouseLeave={mouseLeaveHandler}
                             />

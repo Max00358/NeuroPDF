@@ -4,58 +4,48 @@ import React, { useState, useRef, useEffect } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
-import Canva from "./Canva";
+import Canva from "./Canva.js";
 
-// adding REACT_APP_ prefix means .env var is safe to be exposed to front-end
 pdfjs.GlobalWorkerOptions.workerSrc = process.env.REACT_APP_PDF_WORKER_URL;
 const REACT_URL = process.env.REACT_APP_DOMAIN;
 
-const pdfContainerStyle = {
-    position: "relative",
-    boxSizing: "border-box",
-    height: "64.6vh",
-};
-const buttonListStyle = {
-    position: "absolute", 
-    top: "1.5%",
-    right: "10px",
-
-    display: "flex",
-    flexDirection: "column",
-    gap: "7px",
-    zIndex: 3, 
-    
-    alignItems: "flex-end",
-    cursor: "pointer",
-    
-    ":hover": {
-        backgroundColor: "rgba(255, 255, 255, 1)",
-    }
-}
-const scrollContainerStyle = {
-    overflowY: "auto",
-    height: "100%",
-
-    display: "flex",
-    justifyContent: "center",
-};
-const pdfBackgroundContainerStyle = {
-    height: "100%",
-    //backgroundColor: "rgba(194, 182, 182, 0.38)",
-    //backdropFilter: "blur(6px)",
-
-    borderRadius: "0 0 8px 8px",
-    display: "flex",
-    justifyContent: "center",
-    zIndex: 0,
+// Styles
+const styles = {
+    pdfContainer: {
+        position: "relative",
+        height: "64.6vh",
+        width: "100%",
+        overflow: "hidden",
+    },
+    buttonList: {
+        position: "absolute",
+        top: "1.5%",
+        right: "10px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "7px",
+        zIndex: 3,
+        alignItems: "flex-end",
+    },
+    scrollContainer: {
+        overflowY: "auto",
+        height: "100%",
+        width: "100%",
+    },
+    pageContainer: {
+        marginBottom: "20px",
+        position: "relative",
+        display: "flex",
+        justifyContent: "center",
+    },
 };
 
 const RenderPDF = ({ data }) => {
     const { filePath, showPDF } = data;
-    const fileName = filePath.replace(/^.*[\\\/]/, '')
-    const fileUrl = `${REACT_URL}/uploads/${encodeURIComponent(fileName)}`; // encodeURIComponent for URL safety
+    const fileName = filePath.replace(/^.*[\\\/]/, '');
+    const fileUrl = `${REACT_URL}/uploads/${encodeURIComponent(fileName)}`;
 
-    const [ messageApi, contextHolder ] = message.useMessage();
+    const [messageApi, contextHolder] = message.useMessage();
     const errorShownRef = useRef(false);
 
     const [numPages, setNumPages] = useState(null);
@@ -67,135 +57,106 @@ const RenderPDF = ({ data }) => {
     const [isDrawing, setIsDrawing] = useState(false);
     const [tickCrossClicked, setTickCrossClicked] = useState(false);
 
-    useEffect(() => {
-        if(pdfContainerRef.current){
-            const offsetWidth = pdfContainerRef.current.offsetWidth;
-            const offsetHeight = pdfContainerRef.current.offsetHeight;
+    const canvasContainer = {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        zIndex: (isDrawing || !tickCrossClicked) ? 2 : 1,
+    }
 
+    useEffect(() => {
+        if (pdfContainerRef.current) {
+            const { offsetWidth, offsetHeight } = pdfContainerRef.current;
             setPdfSize({ width: offsetWidth, height: offsetHeight });
         }
-    }, [numPages, scale]);
+    }, [numPages, scale, showPDF]);
 
     const onDocumentLoadSuccess = ({ numPages }) => {
         setNumPages(numPages);
-        errorShownRef.current = false; // reset
+        errorShownRef.current = false;
     };
-    const onDocumentLoadError = () => {
+
+    const onDocumentLoadError = (error) => {
         if (showPDF && !errorShownRef.current) {
             errorShownRef.current = true;
-
-            setTimeout(() => {
-                messageApi.warning("Failed to Load PDF...", 0.8);
-                setTimeout(() => {
-                    errorShownRef.current = false; // reset for future toggles
-                }, 500);
-            }, 0);
+            messageApi.error("Failed to load PDF", 2);
+            console.error("PDF load error:", error);
         }
     };
-    const zoomInHandler = () => {
-        setScale(prev => Math.min(2.0, prev + 0.1));
-    };
-    const zoomOutHandler = () => {
-        setScale(prev => Math.max(0.1, prev - 0.1));
-    };
-    const homeHandler = () => {
-        setScale(defaultScale);
-    };
 
-    const startDrawingHandler = () => {
-        console.log("isDrawing: TRUE!");
-        setIsDrawing(true);
-    };
-    const stopDrawingHandler = () => {
-        console.log("isDrawing: FALSE!");
-        setIsDrawing(false);
-    };
+    const zoomInHandler = () => setScale(prev => Math.min(2.0, prev + 0.1));
+    const zoomOutHandler = () => setScale(prev => Math.max(0.1, prev - 0.1));
+    const homeHandler = () => setScale(defaultScale);
+    const toggleDrawingHandler = () => setIsDrawing(!isDrawing);
 
     return (
         <>
             {contextHolder}
-            {showPDF &&
-            <>
-                <div
-                    style={pdfContainerStyle}
-                >
-                    <span
-                        style={buttonListStyle}
-                    >
+            {showPDF && (
+                <div style={styles.pdfContainer} ref={pdfContainerRef}>
+                    <div style={styles.buttonList}>
                         <Button
                             type="primary"
                             size="middle"
-                            shape='circle'
+                            shape="circle"
                             icon={<HomeOutlined />}
                             onClick={homeHandler}
                         />
                         <Button
                             type="primary"
                             size="middle"
-                            shape='circle'
+                            shape="circle"
                             icon={<ZoomInOutlined />}
                             onClick={zoomInHandler}
                         />
                         <Button
                             type="primary"
                             size="middle"
-                            shape='circle'
+                            shape="circle"
                             icon={<ZoomOutOutlined />}
                             onClick={zoomOutHandler}
                         />
                         <Button
                             type="primary"
                             size="middle"
-                            shape='circle'
-                            danger={isDrawing? true : false}
-                            icon={isDrawing? <StopOutlined /> : <PieChartOutlined />}
-                            onClick={isDrawing? stopDrawingHandler : startDrawingHandler}
+                            shape="circle"
+                            danger={isDrawing}
+                            icon={isDrawing ? <StopOutlined /> : <PieChartOutlined />}
+                            onClick={toggleDrawingHandler}
                         />
-                    </span>
+                    </div>
 
-                    <div 
-                        style={pdfBackgroundContainerStyle}
-                        ref={pdfContainerRef} // ref works on DOM element (div) but not on react-components (Document)
-                    >
-                        <div
-                            style={scrollContainerStyle}
+                    <div style={styles.scrollContainer}>
+                        <Document
+                            file={fileUrl}
+                            loading={<Spin tip="Loading PDF..." />}
+                            onLoadSuccess={onDocumentLoadSuccess}
+                            onLoadError={onDocumentLoadError}
                         >
-                            <Document
-                                file={fileUrl}
-                                loading={
-                                    <Spin tip="Loading PDF..." >
-                                        <div style={{ minHeight: 100 }} />
-                                    </Spin>
-                                }
-                                onDocumentLoadSuccess={onDocumentLoadSuccess}
-                                error={onDocumentLoadError}
-                            >
-                                {Array.from(new Array(numPages), (el, index) => (
+                            {Array.from({ length: numPages || 0 }, (_, index) => (
+                                <div key={`page_${index + 1}`} style={styles.pageContainer}>
                                     <Page
-                                        key={`page_${index+1}`}
-                                        pageNumber={index + 1} // pageNumber starts from 1 not 0
+                                        pageNumber={index + 1}
                                         scale={scale}
-                                        width={1500}
+                                        width={pdfContainerRef.current?.offsetWidth * 0.9}
+                                        renderTextLayer={false}
+                                        renderAnnotationLayer={false}
                                     />
-                                ))}
-                            </Document>
 
-                            <div style={{
-                                position: "absolute",
-                                top: 0,
-                                left: 0,
-                                zIndex: (isDrawing || !tickCrossClicked) ? 2 : 1,
-                            }}>
-                                <Canva 
-                                    drawStatus={{ isDrawing, setIsDrawing, setTickCrossClicked }} 
-                                    pdfSize={ pdfSize }
-                                />
-                            </div>
-                        </div>
+                                    <div style={canvasContainer}>
+                                        <Canva
+                                            drawStatus={{ isDrawing, setIsDrawing, setTickCrossClicked }}
+                                            pdfStatus={{ pdfSize, scale, filePath, index }}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </Document>
                     </div>
                 </div>
-            </>
-            }
+            )}
         </>
     );
 };

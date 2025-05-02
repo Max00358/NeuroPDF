@@ -16,16 +16,22 @@ from fastapi import BackgroundTasks
 from fastapi.responses import StreamingResponse
 from fastapi import Request
 from dotenv import load_dotenv
-import dirtyjson
 import json, httpx, os, re
+import pandas as pd
+import pdfplumber
+import dirtyjson
+
+import fitz
 
 app = FastAPI()
-index_path = "../vs_eng_cache"
+index_path = "../vsEngCache"
+index_table_path = "../pdfTables"
 embedding_model = HuggingFaceEmbeddings(
     model_name="all-MiniLM-L6-v2",
     model_kwargs={"device": "cpu"}
 )
 in_progress_trees = set() # store upload file path
+in_progress_tables = set()
 
 load_dotenv()
 API_KEY = os.getenv("DEEPSEEK_API_KEY")
@@ -49,8 +55,75 @@ app.add_middleware(
 
 # schema for POST
 class MakeTreeRequest(BaseModel):
-    filePath: str  
+    filePath: str
 
+class BoxCoordinates(BaseModel):
+    filePath: str
+    x: float
+    y: float
+    width: float
+    height: float
+    page: int=0
+
+############# Extract Tables & Generate Graphs #############
+def suggest_chart(df):
+    pass
+
+def create_chart(df, chart_type, save_path):
+    pass
+
+def extract_tables_graph_gen_background(filePath: str):
+    tableDir = os.path.join(os.path.dirname(__file__), index_table_path)
+    os.makedirs(tableDir, exist_ok=True)
+
+    try:
+        with pdfplumber.open(filePath) as pdf:
+            for i, page in enumerate(pdf.pages):
+                tables = page.extract_tables()
+
+                cnt = 0
+                for table in tables:
+                    df = pd.DataFrame(table[1:], columns=table[0]) # table[0]: header row
+                    chart_type = suggest_chart(df)
+                    create_chart(df, chart_type, save_path=f'{tableDir}/table_{cnt}.png')
+                    cnt += 1
+
+        in_progress_tables.discard(filePath)       
+
+    except Exception as e:
+        print(f"Error extracting table: {str(e)}")
+
+
+@app.post("/extract-tables")
+async def extract_tables_endpoint(req: BoxCoordinates, background_tasks: BackgroundTasks):
+    doc = fitz.open(os.path.join("..", req.filePath))
+    page = doc[req.page]
+
+    rect = fitz.Rect(
+        req.x, 
+        req.y, 
+        req.x + req.width, 
+        req.y + req.height
+    )
+    page.draw_rect(rect, color=(1,0,0), width=2)
+
+    output_path = req.filePath.replace(".pdf", "_annotated.pdf")
+    doc.save(os.path.join("..", output_path))
+    return {
+        "status" : "saved", 
+        "output" : output_path
+    }
+
+
+    # if req.filePath not in in_progress_tables:
+    #     in_progress_tables.add(req.filePath)
+    #     background_tasks.add_task(extract_tables_graph_gen_background, req.filePath)
+    
+    # return { "status" : "in_progress" }
+
+############################################################
+
+###################### Build JSON Tree #####################
 # filePath: PDF upload path
 # treePath: tree json save path
 def build_tree_background(filePath: str, treePath: str):
@@ -178,7 +251,9 @@ async def get_tree(req: MakeTreeRequest, background_tasks: BackgroundTasks):
         "status": "in_progress"
     }
 
+############################################################
 
+#################### LLM Response Stream ###################
 # chat endpoint (RAG)
 vs_map: dict[str, FAISS] = {} # store vectorstores
 
@@ -264,3 +339,5 @@ async def get_context(request: Request, filePath: str, question: str): # incomin
                             yield f"data: {json.dumps({ 'error': str(e) })}\n\n"
     
     return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+############################################################

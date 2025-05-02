@@ -74,7 +74,6 @@ const tabStyle = {
 
     borderRadius: "8px",
     boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-    //padding: "20px",
 };
 
 const chatComponentStyle = {
@@ -179,7 +178,9 @@ const App = () => {
 				</div>
 			</Header>
 
-			<Content style={contentStyles}>
+			<Content 
+				style={contentStyles}
+			>
 				{isUploaded && (showPDF || showTree) &&
 					<div style={tabStyle}> 
 					
@@ -205,7 +206,9 @@ const App = () => {
 									key="pdf"
 									tab="PDF Viewer"
 								>
-									<div style={pdfOverlayStyle}>
+									<div 
+										style={pdfOverlayStyle}
+									>
 										<RenderPDF 
 											data={{ filePath, showPDF }} 
 										/>
