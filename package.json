@@ -27,7 +27,7 @@
   "scripts": {
     "postinstall": "cp ./node_modules/pdfjs-dist/build/pdf.worker.mjs ./public/pdf.worker.mjs",
     "dev": "concurrently \"npm start\" \"npm run server\"",
-    "server": "cd server && npm run start",
+    "server": "echo 'Server is now handled by FastAPI.'",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",

@@ -38,9 +38,10 @@ load_dotenv()
 API_KEY = os.getenv("DEEPSEEK_API_KEY")
 
 # Add CORS middleware to allow requests from all origins (or specify the origins you need)
+origins = os.getenv("ALLOWED_ORIGINS", "").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # include all origins
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],  # Allow all HTTP methods (you can limit this to specific methods like ["GET", "POST"])
     allow_headers=["*"],  # Allow all headers
