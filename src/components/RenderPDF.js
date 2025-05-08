@@ -7,7 +7,7 @@ import "react-pdf/dist/esm/Page/TextLayer.css";
 import Canva from "./Canva.js";
 
 pdfjs.GlobalWorkerOptions.workerSrc = process.env.REACT_APP_PDF_WORKER_URL;
-const REACT_URL = process.env.REACT_APP_DOMAIN;
+const REACT_URL = process.env.REACT_APP_FAST_API_DOMAIN;
 
 // Styles
 const styles = {
@@ -43,7 +43,7 @@ const styles = {
 const RenderPDF = ({ data }) => {
     const { filePath, showPDF } = data;
     const fileName = filePath.replace(/^.*[\\\/]/, '');
-    const fileUrl = `${REACT_URL}/uploads/${encodeURIComponent(fileName)}`;
+    const fileUrl = `${REACT_URL}/upload/${encodeURIComponent(fileName)}`;
 
     const [messageApi, contextHolder] = message.useMessage();
     const errorShownRef = useRef(false);
@@ -147,7 +147,7 @@ const RenderPDF = ({ data }) => {
 
                                     <div style={canvasContainer}>
                                         <Canva
-                                            drawStatus={{ isDrawing, setIsDrawing, setTickCrossClicked }}
+                                            drawStatus={{ isDrawing, setIsDrawing, setTickCrossClicked, defaultScale }}
                                             pdfStatus={{ pdfSize, scale, filePath, index }}
                                         />
                                     </div>

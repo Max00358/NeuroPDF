@@ -12,11 +12,12 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS      # lightweight vector search engine
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import BackgroundTasks
+from fastapi import BackgroundTasks, UploadFile, File
+from fastapi.staticfiles import StaticFiles
 from fastapi.responses import StreamingResponse
 from fastapi import Request
 from dotenv import load_dotenv
-import json, httpx, os, re
+import json, httpx, os, re, glob
 import pandas as pd
 import pdfplumber
 import dirtyjson
@@ -45,14 +46,6 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers
 )
 
-# In production:
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=[FRONTEND_URL],
-#     allow_methods=["POST"],
-#     allow_headers=["Content-Type"]
-# )
-
 # schema for POST
 class MakeTreeRequest(BaseModel):
     filePath: str
@@ -64,6 +57,35 @@ class BoxCoordinates(BaseModel):
     width: float
     height: float
     page: int=0
+
+############# Upload Files #############
+def clear_uploads(uploads_dir: str):
+    for filename in os.listdir(uploads_dir):
+        file_path = os.path.join(uploads_dir, filename)
+        try:
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+                print(f"(FastAPI) Removed old file: {file_path}")
+        except Exception as e:
+            print(f"(FastAPI) Error deleting file {file_path}: {e}")
+
+@app.post("/upload")
+async def upload_pdf(file: UploadFile = File(...)):
+    uploads_dir = os.path.join(os.path.dirname(__file__), "..", "uploads")
+    os.makedirs(uploads_dir, exist_ok=True)
+    app.mount("/upload", StaticFiles(directory=uploads_dir), name="upload") # fastAPI now not only handles API routes but also file req
+
+    if len(os.listdir(uploads_dir)) > 0:
+        clear_uploads(uploads_dir)
+
+    save_path = os.path.join(uploads_dir, file.filename)
+    with open(save_path, "wb") as f:
+        f.write(await file.read())
+    
+    print(f"(main.py) Uploaded file saved to: {save_path}")
+    return { "filePath": save_path }
+
+############################################################
 
 ############# Extract Tables & Generate Graphs #############
 def suggest_chart(df):

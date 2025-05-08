@@ -4,7 +4,7 @@ import { InboxOutlined } from "@ant-design/icons";
 import { message, Upload } from "antd";
 
 const { Dragger } = Upload;
-const DOMAIN = process.env.REACT_APP_DOMAIN;
+const DOMAIN = process.env.REACT_APP_FAST_API_DOMAIN;
 
 const PdfUploader = (props) => {
     // props is an obj, so we use {...} to catch it

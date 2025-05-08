@@ -21,7 +21,7 @@ trap cleanup EXIT
 
 # Start FastAPI backend (async, &: background)
 cd server/py_service
-#uvicorn main:app --host 127.0.0.1 --port 7860 &
+# uvicorn main:app --host 127.0.0.1 --port 7860 &
 uvicorn main:app --host 127.0.0.1 --port 7860 --loop asyncio --interface asgi3 &
 FASTAPI_PID=$!
 
